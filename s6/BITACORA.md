@@ -121,28 +121,28 @@ sobreajuste), evaluación solo sobre MEDEC real (evita la falsa confianza de S6)
 **Criterio de éxito para la fase LLM+RAG**: superar localización top-1 = 0,846 y
 ROC-AUC = 0,948 del modelo ajustado, sin degradar recall en errores críticos.
 
-**Próximo (S7-S8)**: MLflow desde el día 1; LLM zero-shot (Mistral-7B) sobre la
+**Próximo (S7)**: MLflow desde el día 1; LLM zero-shot (Mistral-7B) sobre la
 validación de MEDEC; indexar guías/CIE-10/vademécum en FAISS → comparación tripartita
 TF-IDF vs. LLM zero-shot vs. LLM+RAG con estas mismas métricas.
 
 ---
 
-## S8 — Comparación tripartita, AUPRC, sesgo EN-ES y riesgos de producción
+## S7 (ext.) — Comparación tripartita, AUPRC, sesgo EN-ES y riesgos de producción
 
 **Cambios**
-- Módulo compartido `s8/metricas.py`: ROC-AUC + **AUPRC** + bootstrap IC95 + McNemar + localización top-1.
-- `s8/preprocesamiento.py`: propagación de `ErrorType`, negación bilingüe, stop_words configurables.
-- `s8/eval_tripartita.py`: comparación **TF-IDF vs LLM zero-shot vs LLM+RAG** (enfoque híbrido API+cache).
-- `s8/analisis_por_tipo.py`: recall/AUPRC/localización por tipo de inconsistencia clínica.
-- `s8/eval_idioma.py` + `s8/eval_tfidf_idioma.py`: diagnóstico sesgo inglés-español.
-- `s8/eval_citimed.py`: pipeline preparado para Odontología CITIMED (cross-domain y fine-tune).
-- `s8/docs/informe_produccion.md`: latencia, costos y privacidad PHI.
+- Módulo compartido `s7/metricas.py`: ROC-AUC + **AUPRC** + bootstrap IC95 + McNemar + localización top-1.
+- `s7/preprocesamiento.py`: propagación de `ErrorType`, negación bilingüe, stop_words configurables.
+- `s7/eval_tripartita.py`: comparación **TF-IDF vs LLM zero-shot vs LLM+RAG** (enfoque híbrido API+cache).
+- `s7/analisis_por_tipo.py`: recall/AUPRC/localización por tipo de inconsistencia clínica.
+- `s7/eval_idioma.py` + `s7/eval_tfidf_idioma.py`: diagnóstico sesgo inglés-español.
+- `s7/eval_citimed.py`: pipeline preparado para Odontología CITIMED (cross-domain y fine-tune).
+- `s7/docs/informe_produccion.md`: latencia, costos y privacidad PHI.
 
 **Arquitectura LLM (decisión)**
 - MEDEC (público): API cloud (`gpt-4o-mini`) con cache JSON → reproducibilidad y bajo costo (~$2–5 val+test).
 - CITIMED (PHI): migrar a Ollama + Mistral-7B local; misma interfaz `LLMClient`.
 
-**Métricas ampliadas (test, referencia S7+S8)**
+**Métricas ampliadas (test, referencia S7)**
 | Métrica | TF-IDF ajustado (S7) | Notas |
 |---------|----------------------|-------|
 | ROC-AUC | 0.949 | IC95 0.940–0.958 |
@@ -151,7 +151,7 @@ TF-IDF vs. LLM zero-shot vs. LLM+RAG con estas mismas métricas.
 | CV 5-fold AUC | 0.965 ± 0.007 | Estable |
 
 **Análisis por ErrorType**
-- Script `analisis_por_tipo.py` genera `salidas_s8/recall_por_tipo_error.csv`.
+- Script `analisis_por_tipo.py` genera `salidas_s7/recall_por_tipo_error.csv`.
 - Prioridad en errores críticos: **Medication** y **Diagnosis**.
 
 **Sesgo EN-ES (plan 3 fases)**
@@ -162,18 +162,18 @@ TF-IDF vs. LLM zero-shot vs. LLM+RAG con estas mismas métricas.
 **Criterio de éxito LLM+RAG**
 Superar localización top-1 = 0.846 y ROC-AUC = 0.948 del TF-IDF ajustado, sin degradar recall en Medication/Diagnosis.
 
-**Ejecución S8**
+**Ejecución S7**
 ```bash
 pip install -r requirements.txt
 python s6/modelo_ajustado.py                    # regenera modelo + AUPRC
-python s8/analisis_por_tipo.py
-python s8/eval_tripartita.py --mock-llm --max-oraciones 500
-python s8/eval_idioma.py --mock-llm --subset 200
-python s8/eval_tfidf_idioma.py                  # requiere MEDEC
-python s8/eval_citimed.py                       # pendiente corpus CITIMED
+python s7/analisis_por_tipo.py
+python s7/eval_tripartita.py --mock-llm --max-oraciones 500
+python s7/eval_idioma.py --mock-llm --subset 200
+python s7/eval_tfidf_idioma.py                  # requiere MEDEC
+python s7/eval_citimed.py                       # pendiente corpus CITIMED
 ```
 
-**Próximo (S9)**
+**Próximo (S8)**
 - [ ] Ejecutar comparación tripartita con API real (OPENAI_API_KEY en .env).
 - [ ] Corpus CITIMED Odontología anonimizado → Fase C sesgo EN-ES.
 - [ ] Cascada producción TF-IDF → LLM local.

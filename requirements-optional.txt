@@ -1,0 +1,12 @@
+# Dependencias opcionales — NO instalar junto con requirements.txt principal.
+#
+# MLflow 2.x exige numpy<2, incompatible con el stack S7 (numpy 2.4.4).
+# Si necesitas MLflow, usa un entorno virtual separado con numpy 1.x:
+#
+#   python -m venv .venv-mlflow
+#   .venv-mlflow\Scripts\activate
+#   pip install "numpy<2" "pandas<3" mlflow>=2.0
+#
+# O espera a integrar tracking manual vía JSON en salidas_s7/ (implementado en S7).
+
+mlflow>=2.0

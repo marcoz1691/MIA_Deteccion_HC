@@ -19,8 +19,8 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from s8.metricas import eval_oraciones, localizacion_top1
-from s8.preprocesamiento import RasgosOracion, explotar_oraciones, load_medec
+from s7.metricas import eval_oraciones, localizacion_top1
+from s7.preprocesamiento import RasgosOracion, explotar_oraciones, load_medec
 
 SEED = 42
 
@@ -64,7 +64,7 @@ def cargar_citimed(path: Path, cfg: dict) -> pd.DataFrame:
 
 def main():
     parser = argparse.ArgumentParser(description="Eval CITIMED Odontología")
-    parser.add_argument("--config", default="s8/config.yaml")
+    parser.add_argument("--config", default="s7/config.yaml")
     parser.add_argument("--modo", default="cross_domain",
                         choices=["cross_domain", "fine_tune"],
                         help="cross_domain: train MEDEC → eval CITIMED; fine_tune: split CITIMED")

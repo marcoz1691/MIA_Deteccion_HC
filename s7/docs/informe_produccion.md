@@ -1,4 +1,4 @@
-# Informe de riesgos de producción — S8
+# Informe de riesgos de producción — S7
 
 Detección de inconsistencias en historias clínicas (CITIMED).
 Fecha: 2026-07-23 · Grupo: Patricio Bayas · José Puebla · Marco Zurita Rojas
@@ -24,7 +24,7 @@ Este documento identifica riesgos operativos al desplegar el sistema en un entor
 | **Reproducibilidad** | Alta (SEED=42) | Media (modelos cambian) | Media-baja |
 | **Mantenimiento** | Bajo | Medio (prompts, API) | Alto (índice + prompts) |
 
-*Latencias LLM medidas en modo mock/heurístico durante desarrollo; con API real se registran en `salidas_s8/metricas_tripartita.json` → `llm_stats`.*
+*Latencias LLM medidas en modo mock/heurístico durante desarrollo; con API real se registran en `salidas_s7/metricas_tripartita.json` → `llm_stats`.*
 
 ---
 
@@ -37,7 +37,7 @@ Este documento identifica riesgos operativos al desplegar el sistema en un entor
 ### Mitigaciones
 1. **Desidentificación local** antes de cualquier llamada externa (nombres, RUT, fechas exactas).
 2. **CITIMED → solo Ollama/Mistral-7B on-premise**; misma interfaz `LLMClient` con `OPENAI_BASE_URL=http://localhost:11434/v1`.
-3. **Cache en disco** (`salidas_s8/cache/`) excluido de git; cifrar en producción.
+3. **Cache en disco** (`salidas_s7/cache/`) excluido de git; cifrar en producción.
 4. **Acuerdo de tratamiento de datos** con proveedor API si se usa cloud en fase piloto anonimizada.
 5. **Auditoría:** registrar qué oraciones se envían, cuándo y con qué hash (sin texto plano en logs).
 
@@ -79,7 +79,7 @@ Medir en piloto con 100 notas reales de odontología antes de go-live.
 | 10.000 oraciones/mes | ~$0.80 | ~$1.50 |
 | 100.000 oraciones/mes | ~$8.00 | ~$15.00 |
 
-*Basado en tarifas config: $0.15/1M input, $0.60/1M output ([`s8/config.yaml`](../config.yaml)).*
+*Basado en tarifas config: $0.15/1M input, $0.60/1M output ([`s7/config.yaml`](../config.yaml)).*
 
 ### Mitigaciones de costo
 - **Cache agresivo** por hash de prompt (implementado en `llm_client.py`).
@@ -108,10 +108,15 @@ Registrar por experimento:
 - Tokens consumidos y costo USD
 - Versión de prompt, modelo y commit git
 
-Comando sugerido:
+Comando sugerido (requiere entorno separado; ver `requirements-optional.txt`):
+
 ```bash
-mlflow run s8/ -P brazos=tfidf,llm_zero,llm_rag
+# MLflow no está en requirements.txt principal (conflicto numpy<2 vs numpy 2.4.4)
+pip install -r requirements-optional.txt  # solo en venv dedicado
+mlflow run s7/ -P brazos=tfidf,llm_zero,llm_rag
 ```
+
+Alternativa sin MLflow: métricas y latencia ya se registran en `salidas_s7/metricas_tripartita.json`.
 
 ---
 
@@ -119,7 +124,7 @@ mlflow run s8/ -P brazos=tfidf,llm_zero,llm_rag
 
 | Fase | Entorno | Brazo activo | Datos |
 |---|---|---|---|
-| **Piloto S8** | Dev | TF-IDF + LLM mock/API | MEDEC |
+| **Piloto S7** | Dev | TF-IDF + LLM mock/API | MEDEC |
 | **Piloto CITIMED** | On-premise | TF-IDF + Ollama local | Odontología anonimizada |
 | **Producción v1** | Hospital | Cascada TF-IDF → LLM local | PHI desidentificado |
 | **Producción v2** | Hospital + RAG | Cascada + FAISS guías CITIMED | Índice interno |

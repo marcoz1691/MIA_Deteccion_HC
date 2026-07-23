@@ -1,4 +1,4 @@
-# S8 — Configuración comparación tripartita TF-IDF vs LLM zero-shot vs LLM+RAG
+# S7 — Configuración comparación tripartita TF-IDF vs LLM zero-shot vs LLM+RAG
 seed: 42
 
 medec:
@@ -8,8 +8,8 @@ medec:
   test: MEDEC-MS-TestSet-with-GroundTruth-and-ErrorType.csv
 
 salidas:
-  dir: salidas_s8
-  cache_dir: salidas_s8/cache
+  dir: salidas_s7
+  cache_dir: salidas_s7/cache
   modelo_tfidf: salidas_ajuste/modelo_ajustado.joblib
 
 llm:
@@ -23,9 +23,9 @@ llm:
 
 rag:
   embedding_model: sentence-transformers/all-MiniLM-L6-v2
-  knowledge_dir: s8/knowledge
+  knowledge_dir: s7/knowledge
   top_k: 3
-  index_path: salidas_s8/faiss_index
+  index_path: salidas_s7/faiss_index
 
 eval:
   split: test               # validation | test

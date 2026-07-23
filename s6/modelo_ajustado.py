@@ -4,7 +4,7 @@ modelo_ajustado.py
 AJUSTE DEL PROTOTIPO (proyecto CITIMED - detección de inconsistencias).
 
 Reformula a nivel de ORACIÓN usando Error Sentence ID de MEDEC.
-Métricas compartidas con S8 (incluye AUPRC). Salidas -> ./salidas_ajuste/
+Métricas compartidas con S7 (incluye AUPRC). Salidas -> ./salidas_ajuste/
 """
 from __future__ import annotations
 
@@ -26,8 +26,8 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from s8.metricas import bootstrap_ci, eval_oraciones, localizacion_top1, mcnemar, met
-from s8.preprocesamiento import RasgosOracion, explotar_oraciones, load_medec
+from s7.metricas import bootstrap_ci, eval_oraciones, localizacion_top1, mcnemar, met
+from s7.preprocesamiento import RasgosOracion, explotar_oraciones, load_medec
 
 SEED = 42
 random.seed(SEED)

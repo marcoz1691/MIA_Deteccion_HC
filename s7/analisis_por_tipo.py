@@ -19,8 +19,8 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from s8.metricas import metricas_por_tipo
-from s8.preprocesamiento import explotar_oraciones, load_medec
+from s7.metricas import metricas_por_tipo
+from s7.preprocesamiento import explotar_oraciones, load_medec
 
 SEED = 42
 
@@ -54,7 +54,7 @@ def plot_heatmap(por_tipo: pd.DataFrame, out_path: Path):
 
 def main():
     parser = argparse.ArgumentParser(description="Análisis por ErrorType")
-    parser.add_argument("--config", default="s8/config.yaml")
+    parser.add_argument("--config", default="s7/config.yaml")
     parser.add_argument("--brazo", default="tfidf", choices=["tfidf"])
     args = parser.parse_args()
 

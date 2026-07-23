@@ -14,10 +14,10 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from s8.llm_client import LLMClient
-from s8.metricas import eval_oraciones
-from s8.preprocesamiento import explotar_oraciones, load_medec
-from s8.prompts import get_prompt, parse_yes_no
+from s7.llm_client import LLMClient
+from s7.metricas import eval_oraciones
+from s7.preprocesamiento import explotar_oraciones, load_medec
+from s7.prompts import get_prompt, parse_yes_no
 
 SEED = 42
 
@@ -35,7 +35,7 @@ def evaluar_idioma(df: pd.DataFrame, client: LLMClient, idioma: str) -> tuple[np
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluación sesgo EN vs ES")
-    parser.add_argument("--config", default="s8/config.yaml")
+    parser.add_argument("--config", default="s7/config.yaml")
     parser.add_argument("--subset", type=int, default=200, help="Oraciones de validación")
     parser.add_argument("--mock-llm", action="store_true")
     args = parser.parse_args()

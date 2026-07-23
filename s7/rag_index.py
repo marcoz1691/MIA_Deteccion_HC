@@ -12,9 +12,9 @@ class RAGIndex:
 
     def __init__(
         self,
-        knowledge_dir: Path | str = "s8/knowledge",
+        knowledge_dir: Path | str = "s7/knowledge",
         embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
-        index_path: Path | str = "salidas_s8/faiss_index",
+        index_path: Path | str = "salidas_s7/faiss_index",
         top_k: int = 3,
     ):
         self.knowledge_dir = Path(knowledge_dir)

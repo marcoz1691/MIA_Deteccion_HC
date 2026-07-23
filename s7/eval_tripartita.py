@@ -19,11 +19,11 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from s8.llm_client import LLMClient
-from s8.metricas import curvas_pr, eval_oraciones, localizacion_top1, mcnemar
-from s8.preprocesamiento import explotar_oraciones, load_medec
-from s8.prompts import get_prompt, parse_yes_no
-from s8.rag_index import RAGIndex
+from s7.llm_client import LLMClient
+from s7.metricas import curvas_pr, eval_oraciones, localizacion_top1, mcnemar
+from s7.preprocesamiento import explotar_oraciones, load_medec
+from s7.prompts import get_prompt, parse_yes_no
+from s7.rag_index import RAGIndex
 
 SEED = 42
 
@@ -101,8 +101,8 @@ def plot_comparacion(resultados: dict, out_path: Path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluación tripartita S8")
-    parser.add_argument("--config", default="s8/config.yaml")
+    parser = argparse.ArgumentParser(description="Evaluación tripartita S7")
+    parser.add_argument("--config", default="s7/config.yaml")
     parser.add_argument("--brazos", default="tfidf,llm_zero,llm_rag")
     parser.add_argument("--mock-llm", action="store_true")
     parser.add_argument("--max-oraciones", type=int, default=None)

@@ -17,8 +17,8 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from s8.metricas import eval_oraciones
-from s8.preprocesamiento import RasgosOracion, explotar_oraciones, load_medec
+from s7.metricas import eval_oraciones
+from s7.preprocesamiento import RasgosOracion, explotar_oraciones, load_medec
 
 SEED = 42
 
@@ -44,7 +44,7 @@ def construir(idioma: str):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="s8/config.yaml")
+    parser.add_argument("--config", default="s7/config.yaml")
     args = parser.parse_args()
 
     cfg = yaml.safe_load(Path(args.config).read_text(encoding="utf-8"))

@@ -21,7 +21,7 @@ class LLMClient:
         model: str = "gpt-4o-mini",
         temperature: float = 0,
         max_tokens: int = 10,
-        cache_dir: Path | str = "salidas_s8/cache",
+        cache_dir: Path | str = "salidas_s7/cache",
         mock: bool = False,
         cost_input_per_1m: float = 0.15,
         cost_output_per_1m: float = 0.60,
