@@ -1,0 +1,105 @@
+{
+  "config": {
+    "clf__C": 1.0,
+    "feats__tfidf__ngram_range": [
+      1,
+      1
+    ]
+  },
+  "cv_auc_folds": [
+    0.9509,
+    0.9684,
+    0.9664,
+    0.9713,
+    0.968
+  ],
+  "cv_auc_mean": 0.965,
+  "cv_auc_sd": 0.0072,
+  "prevalencia_oracion_error_train": 0.0448,
+  "validacion": {
+    "accuracy": 0.9388,
+    "precision": 0.4173,
+    "recall": 0.8934,
+    "f1": 0.5689,
+    "roc_auc": 0.9678,
+    "roc_auc_ci95": [
+      0.9676,
+      0.96,
+      0.9742
+    ],
+    "f1_ci95": [
+      0.569,
+      0.5316,
+      0.6071
+    ],
+    "matriz_confusion": [
+      [
+        6337,
+        398
+      ],
+      [
+        34,
+        285
+      ]
+    ]
+  },
+  "prueba": {
+    "accuracy": 0.9241,
+    "precision": 0.3567,
+    "recall": 0.8167,
+    "f1": 0.4966,
+    "roc_auc": 0.9485,
+    "roc_auc_ci95": [
+      0.9488,
+      0.9398,
+      0.9576
+    ],
+    "f1_ci95": [
+      0.4984,
+      0.4614,
+      0.5362
+    ],
+    "matriz_confusion": [
+      [
+        6020,
+        458
+      ],
+      [
+        57,
+        254
+      ]
+    ]
+  },
+  "localizacion_top1_test": 0.8457,
+  "notas_con_error_test": 311,
+  "ajustado_a_nivel_nota": {
+    "accuracy": 0.5109,
+    "precision": 0.518,
+    "recall": 0.8778,
+    "f1": 0.6516,
+    "roc_auc": 0.4641
+  },
+  "baseline_a_nivel_nota": {
+    "accuracy": 0.5226,
+    "precision": 0.5231,
+    "recall": 0.9453,
+    "f1": 0.6735,
+    "roc_auc": 0.5051
+  },
+  "mcnemar_baseline_vs_ajustado": {
+    "n01_soloB_acierta": 42,
+    "n10_soloA_acierta": 49,
+    "p_value": 0.529602
+  },
+  "meta": {
+    "semilla": 42,
+    "dataset": "MEDEC (particiones oficiales)",
+    "tarea": "clasificacion a nivel de ORACION",
+    "versiones": {
+      "scikit_learn": "1.8.0",
+      "pandas": "3.0.2",
+      "numpy": "2.4.4",
+      "scipy": "1.17.1"
+    }
+  }
+}

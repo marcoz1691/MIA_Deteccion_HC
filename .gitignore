@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Dataset externo y salidas de experimentos
+medec_try/
+salidas_ajuste/
+salidas/
+salidas_medec/
