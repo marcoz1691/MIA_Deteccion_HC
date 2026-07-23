@@ -1,0 +1,1 @@
+Diagnosis inconsistencies include contradictory diagnoses in the same note, symptoms that do not support the stated diagnosis, or staging/severity that conflicts with documented findings. Cross-reference chief complaint, assessment, and plan sections.

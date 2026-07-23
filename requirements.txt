@@ -1,7 +1,14 @@
-# Versiones fijadas para reproducibilidad (probadas con Python 3.12.3)
+# Versiones fijadas para reproducibilidad (Python 3.12+)
 scikit-learn==1.8.0
 pandas==3.0.2
 numpy==2.4.4
 joblib==1.5.3
 matplotlib==3.10.8
 scipy==1.17.1
+# S8 — LLM + RAG + comparación tripartita
+openai>=1.0
+faiss-cpu>=1.8
+sentence-transformers>=3.0
+pyyaml>=6.0
+python-dotenv>=1.0
+mlflow>=2.0

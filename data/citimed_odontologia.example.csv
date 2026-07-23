@@ -1,0 +1,5 @@
+oracion,label,nota_id,oracion_id,error_type
+"Paciente refiere dolor en molar 36 desde hace 3 días.",0,1,0,
+"Se indica amoxicilina 500mg cada 8h pese a alergia documentada a penicilina.",1,1,1,Medication
+"Control periodontal en 6 meses.",0,2,0,
+"Diagnóstico: gingivitis leve; plan: extracción de todas las piezas.",1,2,1,Diagnosis

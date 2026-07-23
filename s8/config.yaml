@@ -1,0 +1,45 @@
+# S8 — Configuración comparación tripartita TF-IDF vs LLM zero-shot vs LLM+RAG
+seed: 42
+
+medec:
+  base_path: medec_try/MEDEC-MS
+  train: MEDEC-Full-TrainingSet-with-ErrorType.csv
+  validation: MEDEC-MS-ValidationSet-with-GroundTruth-and-ErrorType.csv
+  test: MEDEC-MS-TestSet-with-GroundTruth-and-ErrorType.csv
+
+salidas:
+  dir: salidas_s8
+  cache_dir: salidas_s8/cache
+  modelo_tfidf: salidas_ajuste/modelo_ajustado.joblib
+
+llm:
+  provider: openai          # openai-compatible (OpenAI, Mistral, etc.)
+  model: gpt-4o-mini
+  temperature: 0
+  max_tokens: 10
+  # Costo estimado por 1M tokens (USD) para informe de producción
+  cost_input_per_1m: 0.15
+  cost_output_per_1m: 0.60
+
+rag:
+  embedding_model: sentence-transformers/all-MiniLM-L6-v2
+  knowledge_dir: s8/knowledge
+  top_k: 3
+  index_path: salidas_s8/faiss_index
+
+eval:
+  split: test               # validation | test
+  max_oraciones: null       # null = todas; entero para subset (prompt tuning)
+  bootstrap_n: 1000
+  benchmark_n: 100          # oraciones para medir latencia en informe producción
+
+idioma:
+  default: english
+  citimed_esperado: spanish
+
+citimed:
+  data_path: data/citimed_odontologia.csv
+  col_texto: texto
+  col_label: label
+  col_oracion_id: oracion_id
+  col_nota_id: nota_id

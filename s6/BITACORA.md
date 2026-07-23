@@ -127,8 +127,55 @@ TF-IDF vs. LLM zero-shot vs. LLM+RAG con estas mismas métricas.
 
 ---
 
-## S8 — (pendiente) Prototipo LLM + RAG (comparación tripartita)
-- [ ] Detección a nivel de oración.
-- [ ] Índice FAISS de la base de conocimiento.
-- [ ] LLM zero-shot (control, sin RAG) vs. LLM + RAG.
-- [ ] Prueba de McNemar y bootstrap para la comparación.
+## S8 — Comparación tripartita, AUPRC, sesgo EN-ES y riesgos de producción
+
+**Cambios**
+- Módulo compartido `s8/metricas.py`: ROC-AUC + **AUPRC** + bootstrap IC95 + McNemar + localización top-1.
+- `s8/preprocesamiento.py`: propagación de `ErrorType`, negación bilingüe, stop_words configurables.
+- `s8/eval_tripartita.py`: comparación **TF-IDF vs LLM zero-shot vs LLM+RAG** (enfoque híbrido API+cache).
+- `s8/analisis_por_tipo.py`: recall/AUPRC/localización por tipo de inconsistencia clínica.
+- `s8/eval_idioma.py` + `s8/eval_tfidf_idioma.py`: diagnóstico sesgo inglés-español.
+- `s8/eval_citimed.py`: pipeline preparado para Odontología CITIMED (cross-domain y fine-tune).
+- `s8/docs/informe_produccion.md`: latencia, costos y privacidad PHI.
+
+**Arquitectura LLM (decisión)**
+- MEDEC (público): API cloud (`gpt-4o-mini`) con cache JSON → reproducibilidad y bajo costo (~$2–5 val+test).
+- CITIMED (PHI): migrar a Ollama + Mistral-7B local; misma interfaz `LLMClient`.
+
+**Métricas ampliadas (test, referencia S7+S8)**
+| Métrica | TF-IDF ajustado (S7) | Notas |
+|---------|----------------------|-------|
+| ROC-AUC | 0.949 | IC95 0.940–0.958 |
+| **AUPRC** | **0.419** | Complementaria; prevalencia 4.5 % |
+| Localización top-1 | 0.846 | 263/311 notas |
+| CV 5-fold AUC | 0.965 ± 0.007 | Estable |
+
+**Análisis por ErrorType**
+- Script `analisis_por_tipo.py` genera `salidas_s8/recall_por_tipo_error.csv`.
+- Prioridad en errores críticos: **Medication** y **Diagnosis**.
+
+**Sesgo EN-ES (plan 3 fases)**
+- Fase A: LLM zero-shot EN vs ES sobre subset validación (`eval_idioma.py`).
+- Fase B: TF-IDF con stop_words english/spanish/bilingüe (`eval_tfidf_idioma.py`).
+- Fase C: evaluación CITIMED Odontología cuando corpus anonimizado esté listo (`eval_citimed.py`).
+
+**Criterio de éxito LLM+RAG**
+Superar localización top-1 = 0.846 y ROC-AUC = 0.948 del TF-IDF ajustado, sin degradar recall en Medication/Diagnosis.
+
+**Ejecución S8**
+```bash
+pip install -r requirements.txt
+python s6/modelo_ajustado.py                    # regenera modelo + AUPRC
+python s8/analisis_por_tipo.py
+python s8/eval_tripartita.py --mock-llm --max-oraciones 500
+python s8/eval_idioma.py --mock-llm --subset 200
+python s8/eval_tfidf_idioma.py                  # requiere MEDEC
+python s8/eval_citimed.py                       # pendiente corpus CITIMED
+```
+
+**Próximo (S9)**
+- [ ] Ejecutar comparación tripartita con API real (OPENAI_API_KEY en .env).
+- [ ] Corpus CITIMED Odontología anonimizado → Fase C sesgo EN-ES.
+- [ ] Cascada producción TF-IDF → LLM local.
+- [ ] MLflow tracking en CI.
+

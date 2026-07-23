@@ -222,3 +222,5 @@ medec_try/
 salidas_ajuste/
 salidas/
 salidas_medec/
+salidas_s8/
+.env

@@ -1,0 +1,1 @@
+Medication errors occur when prescribed drugs contradict patient allergies, current medications, dosages outside safe ranges, or route of administration incompatible with patient condition. Always verify drug-drug interactions and contraindications.

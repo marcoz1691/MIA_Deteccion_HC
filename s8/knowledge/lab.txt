@@ -1,0 +1,1 @@
+Laboratory inconsistencies occur when lab values contradict clinical narrative, reference ranges are misapplied, or trending results are ignored. Critical values require immediate clinical correlation and documentation.
