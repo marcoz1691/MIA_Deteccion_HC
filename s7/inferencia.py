@@ -56,8 +56,38 @@ class ResultadoOracion:
             return None
         return max(candidatos, key=lambda x: x[1])[0]
 
+    def score_localizacion(self, brazos: list[Brazo]) -> float:
+        """Score para resaltar la oración a revisar."""
+        tf = self.score_tfidf if "tfidf" in brazos else None
+        llm = None
+        if "llm_rag" in brazos and self.score_llm_rag is not None:
+            llm = self.score_llm_rag
+        elif "llm_zero" in brazos and self.score_llm_zero is not None:
+            llm = self.score_llm_zero
+        if llm is not None and tf is not None:
+            return llm * 0.65 + tf * 0.35
+        if tf is not None:
+            return tf
+        if llm is not None:
+            return llm
+        return 0.0
+
+    def brazo_localizacion(self, brazos: list[Brazo]) -> str | None:
+        tf = self.score_tfidf if "tfidf" in brazos else None
+        llm = None
+        llm_name = None
+        if "llm_rag" in brazos and self.score_llm_rag is not None:
+            llm, llm_name = self.score_llm_rag, "LLM + RAG"
+        elif "llm_zero" in brazos and self.score_llm_zero is not None:
+            llm, llm_name = self.score_llm_zero, "LLM zero-shot"
+        if llm is not None and tf is not None:
+            return llm_name if llm >= tf else "TF-IDF"
+        if tf is not None:
+            return "TF-IDF"
+        return llm_name
+
     def alerta(self, umbral: float, brazos: list[Brazo]) -> bool:
-        return self.score_max(brazos) >= umbral
+        return self.score_localizacion(brazos) >= umbral
 
 
 @dataclass
@@ -69,7 +99,10 @@ class ResultadoNota:
     def top1(self, brazos: list[Brazo]) -> ResultadoOracion | None:
         if not self.oraciones:
             return None
-        return max(self.oraciones, key=lambda r: r.score_max(brazos))
+        return max(
+            self.oraciones,
+            key=lambda r: (r.score_localizacion(brazos), -r.sid),
+        )
 
 
 def cargar_config(path: str | Path = "s7/config.yaml") -> dict:
@@ -112,11 +145,12 @@ def puntuar_llm(
     mode: str,
     idioma: Idioma,
     rag: RAGIndex | None = None,
+    nota_context: str = "",
 ) -> tuple[float, str, float, str | None]:
     contexto = rag.retrieve(oracion) if mode == "rag" and rag else ""
     prompt = get_prompt(mode, idioma, oracion, contexto)
     brazo = f"llm_{mode}"
-    resp = client.complete(prompt, brazo=brazo)
+    resp = client.complete(prompt, brazo=brazo, nota_context=nota_context)
     score = parse_yes_no(resp["text"], idioma)
     return score, resp["text"], resp["latency_ms"], contexto or None
 
@@ -175,14 +209,14 @@ def analizar_nota(
         for res in resultados:
             if "llm_zero" in llm_brazos:
                 score, text, lat, _ = puntuar_llm(
-                    res.oracion, client, "zero_shot", idioma, rag=None
+                    res.oracion, client, "zero_shot", idioma, rag=None, nota_context=texto
                 )
                 res.score_llm_zero = score
                 res.respuesta_llm_zero = text
                 res.latencia_llm_zero_ms = lat
             if "llm_rag" in llm_brazos:
                 score, text, lat, ctx = puntuar_llm(
-                    res.oracion, client, "rag", idioma, rag=rag
+                    res.oracion, client, "rag", idioma, rag=rag, nota_context=texto
                 )
                 res.score_llm_rag = score
                 res.respuesta_llm_rag = text
@@ -195,4 +229,4 @@ def analizar_nota(
 def oracion_top1(resultados: list[ResultadoOracion], brazos: list[Brazo]) -> ResultadoOracion | None:
     if not resultados:
         return None
-    return max(resultados, key=lambda r: r.score_max(brazos))
+    return max(resultados, key=lambda r: (r.score_localizacion(brazos), -r.sid))

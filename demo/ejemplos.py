@@ -17,7 +17,7 @@ EJEMPLOS_HARDCODE = {
     "Error de medicación (alergia a penicilina)": (
         "Paciente refiere dolor en molar 36 desde hace 3 días. "
         "Antecedentes: alergia documentada a penicilina. "
-        "Se indica amoxicilina 500 mg cada 8 h por 7 días."
+        "Se indica amoxicilina 500 mg cada 8 h pese a alergia documentada a penicilina."
     ),
     "Error de diagnóstico/plan (extracción excesiva)": (
         "Paciente con gingivitis leve confirmada en examen clínico. "

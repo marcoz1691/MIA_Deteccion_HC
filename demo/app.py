@@ -233,8 +233,8 @@ def main():
     st.subheader("Resumen")
     c1, c2, c3 = st.columns(3)
     c1.metric("Oraciones analizadas", len(resultado.oraciones))
-    c2.metric("Score máximo", f"{top.score_max(brazos):.2f}")
-    c3.metric("Brazo top-1", top.brazo_top(brazos) or "—")
+    c2.metric("Score localización", f"{top.score_localizacion(brazos):.2f}")
+    c3.metric("Brazo localización", top.brazo_localizacion(brazos) or "—")
 
     st.markdown("**Oración más sospechosa:**")
     _render_oracion(top, top_sid, umbral, brazos)
@@ -258,7 +258,9 @@ def main():
     st.dataframe(pd.DataFrame(filas), use_container_width=True, hide_index=True)
 
     for res in resultado.oraciones:
-        if res.sid == top_sid or res.alerta(umbral, brazos):
+        if res.sid == top_sid:
+            _render_oracion(res, top_sid, umbral, brazos)
+        elif res.alerta(umbral, brazos):
             _render_oracion(res, top_sid, umbral, brazos)
 
     with st.expander("¿Qué hace cada brazo?"):
