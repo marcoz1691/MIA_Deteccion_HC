@@ -25,7 +25,11 @@ MIA_Deteccion_HC/
 │   ├── llm_client.py            # API + cache
 │   ├── rag_index.py             # FAISS
 │   ├── config.yaml
+│   ├── inferencia.py            # inferencia interactiva (demo + reutilizable)
 │   └── docs/informe_produccion.md
+├── demo/                        # demo interactiva Streamlit
+│   ├── app.py
+│   └── ejemplos.py
 └── data/
     └── citimed_odontologia.example.csv
 ```
@@ -55,5 +59,24 @@ python s7/analisis_por_tipo.py
 # echo OPENAI_API_KEY=sk-... > .env
 python s7/eval_tripartita.py --max-oraciones 200
 ```
+
+## Demo interactiva
+
+Interfaz web para mostrar el flujo del prototipo al profesor o en clase:
+
+```bash
+pip install -r requirements.txt
+
+# Una vez: entrenar modelo TF-IDF (requiere MEDEC clonado)
+git clone --depth 1 https://github.com/abachaa/MEDEC.git medec_try
+python s6/modelo_ajustado.py
+
+# Lanzar demo (mock LLM por defecto, sin API key)
+streamlit run demo/app.py
+```
+
+Abre `http://localhost:8501`. Puedes pegar una nota clínica o cargar ejemplos de odontología CITIMED; la app segmenta en oraciones, puntúa con TF-IDF / LLM / LLM+RAG y resalta la oración más sospechosa.
+
+Ver [`demo/README.md`](demo/README.md) para un guion de presentación de 2 minutos.
 
 Ver [`s6/BITACORA.md`](s6/BITACORA.md) para el historial completo y [`s7/docs/informe_produccion.md`](s7/docs/informe_produccion.md) para riesgos de producción.
