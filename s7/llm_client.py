@@ -12,6 +12,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+MOCK_VERSION = "3"  # bump al cambiar heurística mock (invalida cache)
+
 
 class LLMClient:
     """Wrapper OpenAI-compatible con cache en disco."""
@@ -50,16 +52,19 @@ class LLMClient:
             if not mock:
                 self.mock = True  # sin API key → mock automático
 
-    def _cache_key(self, prompt: str, brazo: str) -> str:
-        h = hashlib.sha256(f"{brazo}|{self.model}|{prompt}".encode()).hexdigest()
+    def _cache_key(self, prompt: str, brazo: str, nota_context: str = "") -> str:
+        mock_tag = f"|mock{MOCK_VERSION}" if self.mock else ""
+        h = hashlib.sha256(
+            f"{brazo}|{self.model}|{prompt}|{nota_context}{mock_tag}".encode()
+        ).hexdigest()
         return h
 
     def _cache_path(self, key: str) -> Path:
         return self.cache_dir / f"{key}.json"
 
-    def complete(self, prompt: str, brazo: str = "llm") -> dict:
+    def complete(self, prompt: str, brazo: str = "llm", nota_context: str = "") -> dict:
         """Retorna {text, latency_ms, cached, input_tokens, output_tokens, cost_usd}."""
-        key = self._cache_key(prompt, brazo)
+        key = self._cache_key(prompt, brazo, nota_context)
         cache_file = self._cache_path(key)
         if cache_file.exists():
             self.stats["cache_hits"] += 1
@@ -69,7 +74,7 @@ class LLMClient:
 
         t0 = time.perf_counter()
         if self.mock or self._client is None:
-            text = self._mock_response(prompt)
+            text = self._mock_response(prompt, nota_context)
             input_tokens = len(prompt.split()) * 2
             output_tokens = 2
         else:
@@ -108,15 +113,45 @@ class LLMClient:
         return data
 
     @staticmethod
-    def _mock_response(prompt: str) -> str:
-        """Heurística determinista para demo sin API (basada en keywords clínicos)."""
-        p = prompt.lower()
-        triggers = [
-            "contradict", "inconsistent", "incorrect dose", "allergy",
-            "despite", "however", "but patient", "sin embargo", "contradic",
-            "alergia", "dosis incorrecta",
-        ]
-        if any(t in p for t in triggers):
+    def _mock_response(prompt: str, nota_context: str = "") -> str:
+        """Heurística determinista para demo sin API. Analiza solo la oración citada."""
+        import re
+
+        m = re.search(
+            r'(?:Oración(?: de la nota médica)?|Sentence(?: from medical note)?):\s*"([^"]+)"',
+            prompt,
+            re.I | re.S,
+        )
+        oracion = (m.group(1) if m else "").lower()
+        nota = (nota_context or "").lower()
+        if not oracion:
+            return "NO"
+
+        # Contradicción medicación: alergia a penicilina en la nota + prescripción
+        alergia_penicilina = ("alergia" in nota or "allergy" in nota) and (
+            "penicilina" in nota or "penicillin" in nota
+        )
+        if alergia_penicilina and any(
+            d in oracion
+            for d in ("amoxicilina", "ampicilina", "amoxicillin", "ampicillin")
+        ):
+            return "YES"
+
+        # Plan desproporcionado: gingivitis leve vs extracción total
+        if ("gingivitis leve" in nota or "gingivitis leve" in oracion) and (
+            "extracción de todas" in oracion
+            or "todas las piezas" in oracion
+            or "extract all" in oracion
+        ):
+            return "YES"
+
+        # Triggers solo en el texto de la oración (no en instrucciones del prompt)
+        triggers = (
+            "pese a", "despite", "sin embargo", "however",
+            "contradicción", "contradiccion", "contradict",
+            "incorrect dose", "dosis incorrecta",
+        )
+        if any(t in oracion for t in triggers):
             return "YES"
         return "NO"
 
