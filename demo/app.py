@@ -159,13 +159,30 @@ def main():
     opciones = ["— Escribir nota propia —"] + list(ejemplos.keys())
     seleccion = st.selectbox("Cargar ejemplo", opciones)
 
-    default_text = ejemplos.get(seleccion, "") if seleccion != "— Escribir nota propia —" else ""
+    if "ultimo_ejemplo" not in st.session_state:
+        st.session_state.ultimo_ejemplo = seleccion
+        st.session_state.nota_clinica = (
+            ejemplos.get(seleccion, "") if seleccion != "— Escribir nota propia —" else ""
+        )
+
+    if seleccion != st.session_state.ultimo_ejemplo:
+        st.session_state.ultimo_ejemplo = seleccion
+        st.session_state.nota_clinica = (
+            ejemplos.get(seleccion, "") if seleccion != "— Escribir nota propia —" else ""
+        )
+
     nota = st.text_area(
         "Nota clínica",
-        value=default_text,
+        key="nota_clinica",
         height=160,
         placeholder="Pega aquí una historia clínica odontológica o de medicina general…",
     )
+
+    if usar_tfidf and not usar_llm_zero and not usar_llm_rag:
+        st.warning(
+            "Solo TF-IDF: el modelo se entrenó en MEDEC (inglés). "
+            "En notas en español puede marcar oraciones incorrectas; activa LLM mock para mejor localización."
+        )
 
     col_btn, col_info = st.columns([1, 3])
     with col_btn:
@@ -226,18 +243,28 @@ def main():
 
     top = resultado.top1(brazos)
     if top is None:
-        st.info("No se detectaron oraciones en la nota.")
+        st.warning(
+            "No se detectaron oraciones en la nota (texto muy corto o sin puntos). "
+            "Escribe frases completas separadas por puntos."
+        )
         st.stop()
 
     top_sid = top.sid
+    score_loc = top.score_localizacion(brazos)
     st.subheader("Resumen")
     c1, c2, c3 = st.columns(3)
     c1.metric("Oraciones analizadas", len(resultado.oraciones))
-    c2.metric("Score localización", f"{top.score_localizacion(brazos):.2f}")
+    c2.metric("Score localización", f"{score_loc:.2f}")
     c3.metric("Brazo localización", top.brazo_localizacion(brazos) or "—")
 
-    st.markdown("**Oración más sospechosa:**")
-    _render_oracion(top, top_sid, umbral, brazos)
+    if score_loc < umbral:
+        st.success(
+            f"Ninguna oración supera el umbral ({umbral:.2f}). "
+            "La nota no muestra alertas claras con la configuración actual."
+        )
+    else:
+        st.markdown("**Oración más sospechosa:**")
+        _render_oracion(top, top_sid, umbral, brazos)
 
     st.subheader("Detalle por oración")
     filas = []
@@ -258,9 +285,7 @@ def main():
     st.dataframe(pd.DataFrame(filas), use_container_width=True, hide_index=True)
 
     for res in resultado.oraciones:
-        if res.sid == top_sid:
-            _render_oracion(res, top_sid, umbral, brazos)
-        elif res.alerta(umbral, brazos):
+        if score_loc >= umbral and (res.sid == top_sid or res.alerta(umbral, brazos)):
             _render_oracion(res, top_sid, umbral, brazos)
 
     with st.expander("¿Qué hace cada brazo?"):
