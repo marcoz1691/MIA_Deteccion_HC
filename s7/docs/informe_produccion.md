@@ -93,10 +93,17 @@ Medir en piloto con 100 notas reales de odontología antes de go-live.
 
 | Riesgo | Impacto | Mitigación |
 |---|---|---|
-| Caída API LLM | Sin detección semántica | Fallback a TF-IDF solo + alerta |
-| Rate limiting | Cola de revisión retrasada | Retry exponencial + cola async |
+| Caída API LLM | Sin detección semántica | **Implementado:** fallback a TF-IDF solo + alerta (`LLMUnavailableError` → `ResultadoNota.modo_degradado` en `inferencia.py` / demo) |
+| Rate limiting | Cola de revisión retrasada | **Implementado:** retry exponencial en `llm_client.py` (`max_retries`, `retry_base_delay_s`) |
 | Drift del modelo API | Métricas degradan | Monitor AUPRC semanal; versionar prompts |
 | Índice FAISS desactualizado | RAG obsoleto | Re-indexar guías trimestralmente |
+
+Comportamiento del fallback:
+
+1. Llamada API real falla → reintentos con backoff.
+2. Si persiste el fallo → no se usa mock silencioso; se lanza `LLMUnavailableError`.
+3. `analizar_nota(..., fallback_tfidf=True)` limpia scores LLM, asegura TF-IDF y marca `modo_degradado=True` con mensaje para el revisor.
+4. La demo Streamlit muestra banner de alerta y métrica «Modo: Degradado (TF-IDF)».
 
 ---
 

@@ -19,7 +19,7 @@ from s7.inferencia import (
     cargar_modelo_tfidf,
     analizar_nota,
 )
-from s7.llm_client import LLMClient
+from s7.llm_client import LLMClient, LLMUnavailableError
 from s7.rag_index import RAGIndex
 
 st.set_page_config(
@@ -211,29 +211,67 @@ def main():
 
     client = None
     if usar_llm_zero or usar_llm_rag:
-        client = LLMClient(
-            model=cfg["llm"]["model"],
-            temperature=cfg["llm"]["temperature"],
-            max_tokens=cfg["llm"]["max_tokens"],
-            cache_dir=ROOT / cfg["salidas"]["cache_dir"],
-            mock=mock_llm,
-            cost_input_per_1m=cfg["llm"]["cost_input_per_1m"],
-            cost_output_per_1m=cfg["llm"]["cost_output_per_1m"],
-        )
+        llm_cfg = cfg.get("llm", {})
+        try:
+            client = LLMClient(
+                model=llm_cfg.get("model", "gpt-4o-mini"),
+                temperature=llm_cfg.get("temperature", 0),
+                max_tokens=llm_cfg.get("max_tokens", 10),
+                cache_dir=ROOT / cfg["salidas"]["cache_dir"],
+                mock=mock_llm,
+                cost_input_per_1m=llm_cfg.get("cost_input_per_1m", 0.15),
+                cost_output_per_1m=llm_cfg.get("cost_output_per_1m", 0.60),
+                max_retries=llm_cfg.get("max_retries", 3),
+                retry_base_delay_s=llm_cfg.get("retry_base_delay_s", 0.5),
+                # Sin mock: no degradar a heurística silenciosa; preferir fallback TF-IDF.
+                allow_mock_without_key=bool(mock_llm),
+            )
+        except LLMUnavailableError as exc:
+            if not modelo_ok:
+                st.error(
+                    f"API LLM no disponible y no hay modelo TF-IDF para fallback.\n\n{exc}\n\n"
+                    "Entrena el modelo TF-IDF o activa el modo mock LLM."
+                )
+                st.stop()
+            st.warning(
+                "API LLM no disponible al iniciar. Se usará solo TF-IDF "
+                "(fallback de producción)."
+            )
+            brazos = ["tfidf"]
+            usar_llm_zero = False
+            usar_llm_rag = False
+            client = None
+            if modelo is None:
+                modelo = get_modelo_tfidf(str(model_path))
 
     progress = st.progress(0, text="Analizando oraciones…")
     with st.spinner("Procesando nota…"):
+        # Fallback de producción: si cae la API, degradar a TF-IDF + alerta
+        # (aunque el usuario no hubiera marcado TF-IDF), siempre que el modelo exista.
         resultado = analizar_nota(
             nota,
             cfg=cfg,
             brazos=brazos,
             mock_llm=mock_llm,
             idioma=idioma,
-            modelo_tfidf=modelo,
+            modelo_tfidf=modelo if modelo_ok else None,
             client=client,
             rag=rag,
+            fallback_tfidf=modelo_ok,
         )
     progress.progress(100, text="Listo")
+
+    brazos_ui = resultado.brazos_efectivos or brazos
+
+    if resultado.modo_degradado:
+        st.error(
+            "⚠️ Modo degradado — fallback a TF-IDF\n\n"
+            + (resultado.mensaje_fallback or "API LLM caída; sin detección semántica.")
+        )
+        st.info(
+            "El sistema sigue localizando oraciones sospechosas con el modelo léxico. "
+            "Un médico debe revisar la nota; no hay juicio semántico del LLM."
+        )
 
     if resultado.truncado:
         st.warning(
@@ -241,7 +279,7 @@ def main():
             f"se analizaron las primeras 20 en esta demo."
         )
 
-    top = resultado.top1(brazos)
+    top = resultado.top1(brazos_ui)
     if top is None:
         st.warning(
             "No se detectaron oraciones en la nota (texto muy corto o sin puntos). "
@@ -250,12 +288,13 @@ def main():
         st.stop()
 
     top_sid = top.sid
-    score_loc = top.score_localizacion(brazos)
+    score_loc = top.score_localizacion(brazos_ui)
     st.subheader("Resumen")
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     c1.metric("Oraciones analizadas", len(resultado.oraciones))
     c2.metric("Score localización", f"{score_loc:.2f}")
-    c3.metric("Brazo localización", top.brazo_localizacion(brazos) or "—")
+    c3.metric("Brazo localización", top.brazo_localizacion(brazos_ui) or "—")
+    c4.metric("Modo", "Degradado (TF-IDF)" if resultado.modo_degradado else "Normal")
 
     if score_loc < umbral:
         st.success(
@@ -264,29 +303,31 @@ def main():
         )
     else:
         st.markdown("**Oración más sospechosa:**")
-        _render_oracion(top, top_sid, umbral, brazos)
+        _render_oracion(top, top_sid, umbral, brazos_ui)
 
     st.subheader("Detalle por oración")
     filas = []
+    mostrar_llm_zero = usar_llm_zero and "llm_zero" in brazos_ui
+    mostrar_llm_rag = usar_llm_rag and "llm_rag" in brazos_ui
     for res in resultado.oraciones:
         fila = {
             "#": res.sid + 1,
             "Oración": res.oracion[:80] + ("…" if len(res.oracion) > 80 else ""),
-            "Estado": _badge_alerta(res.alerta(umbral, brazos)),
+            "Estado": _badge_alerta(res.alerta(umbral, brazos_ui)),
         }
-        if usar_tfidf:
+        if usar_tfidf or resultado.modo_degradado:
             fila["TF-IDF"] = _fmt_score(res.score_tfidf)
-        if usar_llm_zero:
+        if mostrar_llm_zero:
             fila["LLM zero"] = _fmt_score(res.score_llm_zero)
-        if usar_llm_rag:
+        if mostrar_llm_rag:
             fila["LLM+RAG"] = _fmt_score(res.score_llm_rag)
         filas.append(fila)
 
     st.dataframe(pd.DataFrame(filas), use_container_width=True, hide_index=True)
 
     for res in resultado.oraciones:
-        if score_loc >= umbral and (res.sid == top_sid or res.alerta(umbral, brazos)):
-            _render_oracion(res, top_sid, umbral, brazos)
+        if score_loc >= umbral and (res.sid == top_sid or res.alerta(umbral, brazos_ui)):
+            _render_oracion(res, top_sid, umbral, brazos_ui)
 
     with st.expander("¿Qué hace cada brazo?"):
         st.markdown(EXPLICACION_BRAZOS)

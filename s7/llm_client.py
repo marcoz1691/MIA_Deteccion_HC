@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import time
 from pathlib import Path
@@ -13,6 +14,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 MOCK_VERSION = "3"  # bump al cambiar heurística mock (invalida cache)
+
+logger = logging.getLogger(__name__)
+
+
+class LLMUnavailableError(RuntimeError):
+    """La API LLM no respondió tras reintentos; el caller debe degradar a TF-IDF."""
+
+    def __init__(self, message: str, *, cause: BaseException | None = None):
+        super().__init__(message)
+        self.cause = cause
 
 
 class LLMClient:
@@ -27,6 +38,9 @@ class LLMClient:
         mock: bool = False,
         cost_input_per_1m: float = 0.15,
         cost_output_per_1m: float = 0.60,
+        max_retries: int = 3,
+        retry_base_delay_s: float = 0.5,
+        allow_mock_without_key: bool = True,
     ):
         self.model = model
         self.temperature = temperature
@@ -36,8 +50,17 @@ class LLMClient:
         self.mock = mock
         self.cost_input_per_1m = cost_input_per_1m
         self.cost_output_per_1m = cost_output_per_1m
-        self.stats = {"calls": 0, "cache_hits": 0, "total_latency_ms": 0.0,
-                      "input_tokens": 0, "output_tokens": 0}
+        self.max_retries = max(1, int(max_retries))
+        self.retry_base_delay_s = float(retry_base_delay_s)
+        self.stats = {
+            "calls": 0,
+            "cache_hits": 0,
+            "total_latency_ms": 0.0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "api_errors": 0,
+            "retries": 0,
+        }
 
         api_key = os.getenv("OPENAI_API_KEY") or os.getenv("MISTRAL_API_KEY")
         base_url = os.getenv("OPENAI_BASE_URL")
@@ -50,7 +73,14 @@ class LLMClient:
         else:
             self._client = None
             if not mock:
-                self.mock = True  # sin API key → mock automático
+                if allow_mock_without_key:
+                    # Demo / eval sin key: mock automático (no es fallback de producción).
+                    self.mock = True
+                else:
+                    raise LLMUnavailableError(
+                        "API LLM no configurada (falta OPENAI_API_KEY / MISTRAL_API_KEY). "
+                        "Usar TF-IDF o activar modo mock."
+                    )
 
     def _cache_key(self, prompt: str, brazo: str, nota_context: str = "") -> str:
         mock_tag = f"|mock{MOCK_VERSION}" if self.mock else ""
@@ -62,8 +92,49 @@ class LLMClient:
     def _cache_path(self, key: str) -> Path:
         return self.cache_dir / f"{key}.json"
 
+    def _call_api(self, prompt: str) -> tuple[str, int, int]:
+        """Llama a la API con reintentos. Lanza LLMUnavailableError si falla."""
+        assert self._client is not None
+        last_err: BaseException | None = None
+        for attempt in range(self.max_retries):
+            try:
+                resp = self._client.chat.completions.create(
+                    model=self.model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=self.temperature,
+                    max_tokens=self.max_tokens,
+                )
+                text = resp.choices[0].message.content or "NO"
+                usage = resp.usage
+                input_tokens = usage.prompt_tokens if usage else 0
+                output_tokens = usage.completion_tokens if usage else 0
+                return text, input_tokens, output_tokens
+            except Exception as exc:  # noqa: BLE001 — degradación controlada
+                last_err = exc
+                self.stats["api_errors"] += 1
+                if attempt + 1 >= self.max_retries:
+                    break
+                self.stats["retries"] += 1
+                delay = self.retry_base_delay_s * (2 ** attempt)
+                logger.warning(
+                    "LLM API error (intento %s/%s): %s; reintento en %.1fs",
+                    attempt + 1,
+                    self.max_retries,
+                    exc,
+                    delay,
+                )
+                time.sleep(delay)
+
+        raise LLMUnavailableError(
+            f"API LLM no disponible tras {self.max_retries} intentos: {last_err}",
+            cause=last_err,
+        )
+
     def complete(self, prompt: str, brazo: str = "llm", nota_context: str = "") -> dict:
-        """Retorna {text, latency_ms, cached, input_tokens, output_tokens, cost_usd}."""
+        """Retorna {text, latency_ms, cached, input_tokens, output_tokens, cost_usd}.
+
+        Si la API real falla tras reintentos, lanza LLMUnavailableError (no mock silencioso).
+        """
         key = self._cache_key(prompt, brazo, nota_context)
         cache_file = self._cache_path(key)
         if cache_file.exists():
@@ -78,16 +149,7 @@ class LLMClient:
             input_tokens = len(prompt.split()) * 2
             output_tokens = 2
         else:
-            resp = self._client.chat.completions.create(
-                model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-            )
-            text = resp.choices[0].message.content or "NO"
-            usage = resp.usage
-            input_tokens = usage.prompt_tokens if usage else 0
-            output_tokens = usage.completion_tokens if usage else 0
+            text, input_tokens, output_tokens = self._call_api(prompt)
 
         latency_ms = (time.perf_counter() - t0) * 1000
         cost = (
@@ -170,4 +232,6 @@ class LLMClient:
             "total_output_tokens": self.stats["output_tokens"],
             "estimated_cost_usd": round(total_cost, 4),
             "mock_mode": self.mock,
+            "api_errors": self.stats["api_errors"],
+            "retries": self.stats["retries"],
         }

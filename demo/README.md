@@ -29,3 +29,5 @@ Sidebar → **Métricas de referencia S7**: AUC 0.949, localización 84.6 % sobr
 
 - Modelo entrenado: `python s6/modelo_ajustado.py`
 - Mock LLM activo por defecto (no requiere internet ni API key)
+- Si desactivas mock y la API no responde: **fallback automático a TF-IDF** con banner de alerta
+  (sin detección semántica; el médico debe revisar)
