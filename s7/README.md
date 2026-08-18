@@ -20,3 +20,12 @@ python s7/eval_citimed.py
 ```
 
 Salidas en `salidas_s7/` (gitignored).
+
+## Fallback de producción (API caída)
+
+Si la API LLM falla (o no hay key con mock desactivado), el pipeline **no** usa mock silencioso:
+reintenta y, si persiste, degrada a **TF-IDF solo + alerta** (`modo_degradado` en `inferencia.py`).
+
+```bash
+python s7/test_fallback.py
+```
