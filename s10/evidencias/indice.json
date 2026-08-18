@@ -1,0 +1,17 @@
+{
+  "evidencias": [
+    "metricas_tfidf.json",
+    "metricas_tripartita.json",
+    "analisis_por_tipo.json",
+    "eval_idioma_en_es.json",
+    "eval_tfidf_idioma.json",
+    "recall_por_tipo_error.csv",
+    "figura_ajuste.png"
+  ],
+  "capturas": [
+    "comparacion_brazos.png",
+    "recall_por_tipo_heatmap.png",
+    "shap_summary_bar.png",
+    "lime_caso_tp.png"
+  ]
+}

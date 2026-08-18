@@ -1,0 +1,29 @@
+S10 verificacion de evidencias — 2026-08-18T04:12:17Z UTC
+Repositorio: C:\Users\MarcoZurita\git\MIA_Deteccion_HC
+
+Archivos copiados:
+  [ok] s6\metricas_ajuste.json -> s10\evidencias\metricas_tfidf.json
+  [ok] salidas_s7\metricas_tripartita.json -> s10\evidencias\metricas_tripartita.json
+  [ok] salidas_s7\analisis_por_tipo.json -> s10\evidencias\analisis_por_tipo.json
+  [ok] salidas_s7\eval_idioma_en_es.json -> s10\evidencias\eval_idioma_en_es.json
+  [ok] salidas_s7\eval_tfidf_idioma.json -> s10\evidencias\eval_tfidf_idioma.json
+  [ok] salidas_s7\recall_por_tipo_error.csv -> s10\evidencias\recall_por_tipo_error.csv
+  [ok] s6\figura_ajuste.png -> s10\evidencias\figura_ajuste.png
+  [ok] salidas_s7\figura_comparacion.png -> s10\evidencias\capturas\figura_comparacion_tripartita.png
+  [ok] salidas_s7\heatmap_recall_por_tipo.png -> s10\evidencias\capturas\heatmap_recall_por_tipo.png
+  [ok] salidas_s7\shap_summary_bar.png -> s10\evidencias\capturas\shap_summary_bar.png
+
+Comandos de regeneracion:
+  python s6/modelo_ajustado.py
+  python s7/analisis_por_tipo.py
+  python s7/eval_tripartita.py --mock-llm --max-oraciones 500
+  python s7/eval_idioma.py --mock-llm --subset 200
+  python s7/test_fallback.py
+
+Checklist coherencia informe:
+  [x] Tabla S132-148 marcada como Implementado
+  [x] Anexo sin baseline_medec.py ni salidas_medec/
+  [x] AUPRC 0.419 con prevalencia 4.5 %
+  [x] Ollama + fallback descritos
+  [x] LangChain/Docker/DVC/MLflow en trabajo futuro
+  [x] Metricas citadas desde JSON locales

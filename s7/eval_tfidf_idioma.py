@@ -18,13 +18,13 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from s7.metricas import eval_oraciones
-from s7.preprocesamiento import RasgosOracion, explotar_oraciones, load_medec
+from s7.preprocesamiento import RasgosOracion, explotar_oraciones, load_medec, stop_words_tfidf
 
 SEED = 42
 
 
 def construir(idioma: str):
-    stop = None if idioma == "none" else idioma
+    stop = stop_words_tfidf(idioma)  # type: ignore[arg-type]
     return Pipeline([
         ("feats", FeatureUnion([
             ("tfidf", TfidfVectorizer(

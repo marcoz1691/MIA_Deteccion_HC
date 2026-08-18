@@ -1,0 +1,8 @@
+{
+  "tfidf_test": {
+    "roc_auc": 0.9485,
+    "auprc": 0.4186,
+    "localizacion_top1": 0.8457,
+    "notas_con_error": 311
+  }
+}

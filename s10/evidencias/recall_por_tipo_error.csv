@@ -1,0 +1,6 @@
+error_type,n_oraciones,recall,precision,f1,auprc,localizacion_top1,n_notas
+causalOrganism,11,0.8182,1.0,0.9,1.0,0.8182,11
+diagnosis,116,0.8966,1.0,0.9455,1.0,0.9483,116
+management,97,0.6804,1.0,0.8098,1.0,0.732,97
+pharmacotherapy,36,0.8611,1.0,0.9254,1.0,0.8611,36
+treatment,51,0.8627,1.0,0.9263,1.0,0.8235,51

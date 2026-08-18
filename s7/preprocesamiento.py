@@ -10,6 +10,35 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 StopWordsLang = Literal["english", "spanish", "none"]
 
+# sklearn TfidfVectorizer solo admite stop_words='english' como str; para español usamos lista.
+STOP_WORDS_ES = frozenset({
+    "a", "al", "algo", "algunas", "algunos", "ante", "antes", "como", "con", "contra",
+    "cual", "cuando", "de", "del", "desde", "donde", "durante", "e", "el", "ella",
+    "ellas", "ello", "ellos", "en", "entre", "era", "erais", "eran", "eras", "es",
+    "esa", "esas", "ese", "eso", "esos", "esta", "estaba", "estaban", "estado", "estados",
+    "estais", "estamos", "estan", "estar", "estas", "este", "estos", "estoy", "fin",
+    "fue", "fueron", "fui", "ha", "habia", "habian", "haber", "habia", "han", "has",
+    "hasta", "hay", "he", "hemos", "hube", "hubo", "la", "las", "le", "les", "lo",
+    "los", "mas", "me", "mi", "mis", "mucho", "muy", "nada", "ni", "no", "nos",
+    "nosotras", "nosotros", "nuestra", "nuestras", "nuestro", "nuestros", "o", "os",
+    "otra", "otras", "otro", "otros", "para", "pero", "poco", "por", "porque", "que",
+    "quien", "quienes", "se", "sea", "ser", "si", "sin", "sobre", "sois", "solamente",
+    "solo", "somos", "son", "soy", "su", "sus", "suya", "suyas", "suyo", "suyos",
+    "tambien", "te", "ti", "tiene", "tienen", "todo", "todos", "tu", "tus", "tuya",
+    "tuyas", "tuyo", "tuyos", "un", "una", "uno", "unos", "vosotras", "vosotros",
+    "vuestra", "vuestras", "vuestro", "vuestros", "y", "ya", "yo",
+})
+
+
+def stop_words_tfidf(idioma: StopWordsLang) -> str | list[str] | None:
+    """Valor válido para TfidfVectorizer(stop_words=...) según idioma."""
+    if idioma == "english":
+        return "english"
+    if idioma == "spanish":
+        return sorted(STOP_WORDS_ES)
+    return None
+
+
 NEG_EN = re.compile(r"\b(no|not|without|denies|negative|absent)\b", re.I)
 NEG_ES = re.compile(r"\b(no|sin|negativo|niega|niega|ausente|negativa)\b", re.I)
 NEG_BILINGUE = re.compile(

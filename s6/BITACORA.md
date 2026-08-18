@@ -179,3 +179,41 @@ python s7/eval_citimed.py                       # pendiente corpus CITIMED
 - [ ] Cascada producción TF-IDF → LLM local.
 - [ ] MLflow tracking en CI.
 
+---
+
+## S10 — Consolidación final (informe ↔ repo)
+
+**Cambios**
+- Informe S10 redactado desde el repositorio (no parcheado desde Word S8 desactualizado).
+- Carpeta `s10/` con PDF, Word editable, evidencias JSON/CSV/figuras y scripts de verificación.
+- Corrección `stop_words_tfidf()` en `s7/preprocesamiento.py` (sklearn no admite `'spanish'` como string).
+- Matriz §132–148 del plan S7 marcada como **implementada** en informe; LangChain/Docker/DVC/MLflow en § trabajo futuro.
+
+**Resultados (test MEDEC, fuente `s6/metricas_ajuste.json`)**
+| Métrica | Valor |
+|---------|-------|
+| ROC-AUC | 0.949 (IC95 0.940–0.958) |
+| AUPRC | 0.419 (prevalencia 4.5 %) |
+| Localización top-1 | 0.846 (263/311 notas) |
+
+Tripartita (500 oraciones, mock LLM): TF-IDF AUC 0.954; brazos LLM AUC≈0.5 (limitación mock declarada).
+
+**Hallazgos**
+1. El borrador S8 listaba capacidades S7 como pendientes; el repo ya las implementaba — informe S10 alineado con código.
+2. `eval_tfidf_idioma.py`: stop words español mejora test AUC a 0.959 vs 0.949 english-only.
+3. Ollama + fallback TF-IDF + auditoría SHA-256 documentados como entregables de producción.
+
+**Ejecución S10**
+```bash
+python s10/run_verificacion.py
+python s10/generate_informe.py
+```
+
+**Entregables:** `s10/docs/S10_Avance_Consolidado.pdf` (Moodle), `s10/evidencias/`.
+
+**Próximo (post-S10)**
+- [ ] Eval tripartita con API real u Ollama local.
+- [ ] Corpus CITIMED anonimizado.
+- [ ] Cascada TF-IDF→LLM codificada en `inferencia.py`.
+- [ ] MLOps (MLflow/DVC/Docker) en entorno separado.
+

@@ -10,6 +10,26 @@ Reformular la tarea de **nivel nota** a **nivel oración** sobre MEDEC eleva el 
 
 ---
 
+## Entrega S10
+
+Informe consolidado y evidencias cuantitativas alineadas con el repositorio (no el borrador S8).
+
+| Recurso | Descripción |
+|---------|-------------|
+| [`s10/docs/S10_Avance_Consolidado.pdf`](s10/docs/S10_Avance_Consolidado.pdf) | PDF para Moodle (plazo 23-ago-2026) |
+| [`s10/docs/S10_Avance_Consolidado.docx`](s10/docs/S10_Avance_Consolidado.docx) | Fuente editable |
+| [`s10/evidencias/`](s10/evidencias/) | JSON, CSV y figuras desde `salidas_s7/` y `s6/` |
+| [`s10/README.md`](s10/README.md) | Índice y comandos de regeneración |
+
+Regenerar informe y evidencias:
+
+```bash
+python s10/run_verificacion.py      # batería completa (opcional)
+python s10/generate_informe.py        # Word + PDF + evidencias
+```
+
+---
+
 ## Inicio rápido (clonar y tener todo corriendo)
 
 Sigue estos pasos **desde la raíz del repositorio** (`MIA_Deteccion_HC/`). Todos los comandos asumen que ya estás en esa carpeta.
@@ -173,6 +193,13 @@ MIA_Deteccion_HC/
 │   ├── pages/                   # Métricas, Acerca, Configuración
 │   ├── components/              # UI, auth, paneles
 │   └── README.md                # Guion de presentación (2 min)
+├── s8/                          # Entrega S8 — informes históricos
+│   ├── docs/                    # Word borrador S8 (.docx)
+│   └── README.md
+├── s10/                         # Entrega S10 — informe consolidado + evidencias
+│   ├── docs/                    # S10_Avance_Consolidado.pdf / .docx
+│   ├── evidencias/              # JSON, CSV, figuras (committeable)
+│   └── README.md
 └── data/
     └── citimed_odontologia.example.csv
 ```
@@ -213,4 +240,4 @@ Interfaz web para mostrar el flujo del prototipo al profesor o en clase.
 
 Ver [`demo/README.md`](demo/README.md) para un guion de presentación de 2 minutos.
 
-Ver [`s6/BITACORA.md`](s6/BITACORA.md) para el historial completo y [`s7/docs/informe_produccion.md`](s7/docs/informe_produccion.md) para riesgos de producción.
+Ver [`s6/BITACORA.md`](s6/BITACORA.md) para el historial completo, [`s7/docs/informe_produccion.md`](s7/docs/informe_produccion.md) para riesgos de producción, [`s8/README.md`](s8/README.md) para el borrador histórico S8 y [`s10/README.md`](s10/README.md) para la entrega consolidada S10.
