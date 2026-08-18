@@ -217,6 +217,9 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# Cursor IDE (reglas locales, no versionar)
+.cursor/
+
 # Dataset externo y salidas de experimentos
 medec_try/
 salidas_ajuste/
