@@ -217,6 +217,10 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# Frontend React
+node_modules/
+frontend/dist/
+
 # Cursor IDE (reglas locales, no versionar)
 .cursor/
 

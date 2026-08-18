@@ -12,4 +12,7 @@ sentence-transformers>=3.0
 pyyaml>=6.0
 python-dotenv>=1.0
 streamlit>=1.32
+# API FastAPI
+fastapi>=0.110
+uvicorn[standard]>=0.27
 # MLflow es opcional (conflicta con numpy>=2). Ver requirements-optional.txt
