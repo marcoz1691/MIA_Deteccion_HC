@@ -24,8 +24,9 @@ Informe consolidado y evidencias cuantitativas alineadas con el repositorio (no 
 Regenerar informe y evidencias:
 
 ```bash
-python s10/run_verificacion.py      # batería completa (opcional)
-python s10/generate_informe.py        # Word + PDF + evidencias
+python s10/organize_evidencias.py   # copia JSON/figuras a s10/evidencias/
+python s10/generate_informe.py      # Word + PDF desde métricas del repo
+python s10/run_verificacion.py      # batería completa (opcional, ~10 min)
 ```
 
 ---
