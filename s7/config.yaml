@@ -20,6 +20,10 @@ llm:
   # Costo estimado por 1M tokens (USD) para informe de producción
   cost_input_per_1m: 0.15
   cost_output_per_1m: 0.60
+  # Disponibilidad: reintentos + fallback a TF-IDF (ver inferencia.analizar_nota)
+  max_retries: 3
+  retry_base_delay_s: 0.5
+  allow_mock_without_key: true   # demo/eval; en prod preferir false + fallback_tfidf
 
 rag:
   embedding_model: sentence-transformers/all-MiniLM-L6-v2

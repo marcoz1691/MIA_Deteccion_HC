@@ -223,4 +223,5 @@ salidas_ajuste/
 salidas/
 salidas_medec/
 salidas_s7/
+salidas_s7/audit.log
 .env

@@ -1,0 +1,10 @@
+---
+description: Git commits sin atribución a Cursor Agent
+alwaysApply: true
+---
+
+# Commits de git
+
+- Nunca añadir `Co-authored-by: Cursor` ni `Co-authored-by: Cursor Agent` en mensajes de commit.
+- Los commits deben aparecer solo con el autor humano del proyecto (Marco Zurita / marcoz1691).
+- Si se crea un commit, usar mensaje limpio sin trailers de co-autor de herramientas IA.

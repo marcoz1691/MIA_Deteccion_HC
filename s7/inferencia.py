@@ -11,7 +11,7 @@ import joblib
 import numpy as np
 import yaml
 
-from s7.llm_client import LLMClient
+from s7.llm_client import LLMClient, LLMUnavailableError
 from s7.prompts import get_prompt, parse_yes_no
 from s7.rag_index import RAGIndex
 
@@ -19,6 +19,11 @@ Idioma = Literal["english", "spanish"]
 Brazo = Literal["tfidf", "llm_zero", "llm_rag"]
 
 MAX_ORACIONES_DEMO = 20
+
+MENSAJE_FALLBACK_TFIDF = (
+    "API LLM no disponible: se usa solo TF-IDF (sin detección semántica). "
+    "Revisar conectividad/API key o desplegar Ollama local."
+)
 
 
 @dataclass
@@ -95,13 +100,20 @@ class ResultadoNota:
     oraciones: list[ResultadoOracion] = field(default_factory=list)
     truncado: bool = False
     n_total: int = 0
+    # Fallback producción: caída API → TF-IDF solo + alerta (informe_produccion.md §6)
+    modo_degradado: bool = False
+    brazos_efectivos: list[Brazo] = field(default_factory=list)
+    mensaje_fallback: str | None = None
 
-    def top1(self, brazos: list[Brazo]) -> ResultadoOracion | None:
+    def top1(self, brazos: list[Brazo] | None = None) -> ResultadoOracion | None:
         if not self.oraciones:
             return None
+        activos = brazos if brazos is not None else self.brazos_efectivos
+        if not activos:
+            activos = ["tfidf"]
         return max(
             self.oraciones,
-            key=lambda r: (r.score_localizacion(brazos), -r.sid),
+            key=lambda r: (r.score_localizacion(activos), -r.sid),
         )
 
 
@@ -155,6 +167,35 @@ def puntuar_llm(
     return score, resp["text"], resp["latency_ms"], contexto or None
 
 
+def _limpiar_scores_llm(resultados: list[ResultadoOracion]) -> None:
+    for res in resultados:
+        res.score_llm_zero = None
+        res.score_llm_rag = None
+        res.respuesta_llm_zero = None
+        res.respuesta_llm_rag = None
+        res.latencia_llm_zero_ms = None
+        res.latencia_llm_rag_ms = None
+        res.rag_context = None
+
+
+def _asegurar_tfidf(
+    resultados: list[ResultadoOracion],
+    textos: list[str],
+    cfg: dict,
+    modelo_tfidf,
+) -> object:
+    """Garantiza scores TF-IDF (brazo de fallback obligatorio en degradación)."""
+    if resultados and resultados[0].score_tfidf is not None:
+        return modelo_tfidf
+    if modelo_tfidf is None:
+        model_path = Path(cfg["salidas"]["modelo_tfidf"])
+        modelo_tfidf = cargar_modelo_tfidf(model_path)
+    scores, _ = puntuar_tfidf(textos, modelo_tfidf)
+    for i, score in enumerate(scores):
+        resultados[i].score_tfidf = float(score)
+    return modelo_tfidf
+
+
 def analizar_nota(
     texto: str,
     cfg: dict | None = None,
@@ -165,9 +206,11 @@ def analizar_nota(
     client: LLMClient | None = None,
     rag: RAGIndex | None = None,
     max_oraciones: int = MAX_ORACIONES_DEMO,
+    fallback_tfidf: bool = True,
 ) -> ResultadoNota:
+    """Analiza una nota. Si la API LLM cae y ``fallback_tfidf``, degrada a TF-IDF + alerta."""
     cfg = cfg or cargar_config()
-    brazos = brazos or ["tfidf", "llm_zero", "llm_rag"]
+    brazos = list(brazos or ["tfidf", "llm_zero", "llm_rag"])
 
     segmentos = segmentar_nota(texto)
     n_total = len(segmentos)
@@ -187,43 +230,68 @@ def analizar_nota(
             resultados[i].score_tfidf = float(score)
 
     llm_brazos = [b for b in brazos if b.startswith("llm_")]
+    modo_degradado = False
+    mensaje_fallback: str | None = None
+    brazos_efectivos: list[Brazo] = list(brazos)
+
     if llm_brazos:
-        if client is None:
-            client = LLMClient(
-                model=cfg["llm"]["model"],
-                temperature=cfg["llm"]["temperature"],
-                max_tokens=cfg["llm"]["max_tokens"],
-                cache_dir=cfg["salidas"]["cache_dir"],
-                mock=mock_llm,
-                cost_input_per_1m=cfg["llm"]["cost_input_per_1m"],
-                cost_output_per_1m=cfg["llm"]["cost_output_per_1m"],
-            )
-        if "llm_rag" in llm_brazos and rag is None:
-            rag = RAGIndex(
-                knowledge_dir=cfg["rag"]["knowledge_dir"],
-                embedding_model=cfg["rag"]["embedding_model"],
-                index_path=cfg["rag"]["index_path"],
-                top_k=cfg["rag"]["top_k"],
-            ).load()
-
-        for res in resultados:
-            if "llm_zero" in llm_brazos:
-                score, text, lat, _ = puntuar_llm(
-                    res.oracion, client, "zero_shot", idioma, rag=None, nota_context=texto
+        try:
+            if client is None:
+                llm_cfg = cfg.get("llm", {})
+                client = LLMClient(
+                    model=llm_cfg.get("model", "gpt-4o-mini"),
+                    temperature=llm_cfg.get("temperature", 0),
+                    max_tokens=llm_cfg.get("max_tokens", 10),
+                    cache_dir=cfg["salidas"]["cache_dir"],
+                    mock=mock_llm,
+                    cost_input_per_1m=llm_cfg.get("cost_input_per_1m", 0.15),
+                    cost_output_per_1m=llm_cfg.get("cost_output_per_1m", 0.60),
+                    max_retries=llm_cfg.get("max_retries", 3),
+                    retry_base_delay_s=llm_cfg.get("retry_base_delay_s", 0.5),
+                    allow_mock_without_key=llm_cfg.get("allow_mock_without_key", True),
                 )
-                res.score_llm_zero = score
-                res.respuesta_llm_zero = text
-                res.latencia_llm_zero_ms = lat
-            if "llm_rag" in llm_brazos:
-                score, text, lat, ctx = puntuar_llm(
-                    res.oracion, client, "rag", idioma, rag=rag, nota_context=texto
-                )
-                res.score_llm_rag = score
-                res.respuesta_llm_rag = text
-                res.latencia_llm_rag_ms = lat
-                res.rag_context = ctx
+            if "llm_rag" in llm_brazos and rag is None:
+                rag = RAGIndex(
+                    knowledge_dir=cfg["rag"]["knowledge_dir"],
+                    embedding_model=cfg["rag"]["embedding_model"],
+                    index_path=cfg["rag"]["index_path"],
+                    top_k=cfg["rag"]["top_k"],
+                ).load()
 
-    return ResultadoNota(oraciones=resultados, truncado=truncado, n_total=n_total)
+            for res in resultados:
+                if "llm_zero" in llm_brazos:
+                    score, text, lat, _ = puntuar_llm(
+                        res.oracion, client, "zero_shot", idioma, rag=None, nota_context=texto
+                    )
+                    res.score_llm_zero = score
+                    res.respuesta_llm_zero = text
+                    res.latencia_llm_zero_ms = lat
+                if "llm_rag" in llm_brazos:
+                    score, text, lat, ctx = puntuar_llm(
+                        res.oracion, client, "rag", idioma, rag=rag, nota_context=texto
+                    )
+                    res.score_llm_rag = score
+                    res.respuesta_llm_rag = text
+                    res.latencia_llm_rag_ms = lat
+                    res.rag_context = ctx
+        except LLMUnavailableError as exc:
+            if not fallback_tfidf:
+                raise
+            _limpiar_scores_llm(resultados)
+            modelo_tfidf = _asegurar_tfidf(resultados, textos, cfg, modelo_tfidf)
+            brazos_efectivos = ["tfidf"]
+            modo_degradado = True
+            detalle = str(exc).split(":")[0]
+            mensaje_fallback = f"{MENSAJE_FALLBACK_TFIDF} ({detalle})"
+
+    return ResultadoNota(
+        oraciones=resultados,
+        truncado=truncado,
+        n_total=n_total,
+        modo_degradado=modo_degradado,
+        brazos_efectivos=brazos_efectivos,
+        mensaje_fallback=mensaje_fallback,
+    )
 
 
 def oracion_top1(resultados: list[ResultadoOracion], brazos: list[Brazo]) -> ResultadoOracion | None:
