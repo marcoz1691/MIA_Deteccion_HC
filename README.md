@@ -40,6 +40,7 @@ Sigue estos pasos **desde la raíz del repositorio** (`MIA_Deteccion_HC/`). Todo
 | Requisito | Versión mínima | Notas |
 |-----------|----------------|-------|
 | **Python** | 3.12 | Comprobar con `python --version` |
+| **Node.js** | 18+ | Solo para el frontend React (`frontend/`) |
 | **Git** | cualquiera reciente | Para clonar este repo y el dataset MEDEC |
 | **Conexión a internet** | — | Solo la primera vez (pip, MEDEC, embeddings RAG) |
 
@@ -90,29 +91,57 @@ Debe quedar la ruta `medec_try/MEDEC-MS/` con los CSV de entrenamiento, validaci
 python s6/modelo_ajustado.py
 ```
 
-Genera `salidas_ajuste/modelo_ajustado.joblib` (~1 min en CPU). La demo lo necesita para el brazo TF-IDF.
+Genera `salidas_ajuste/modelo_ajustado.joblib` (~1 min en CPU). Obligatorio para TF-IDF en la demo y la API.
 
-### 5. Lanzar la demo interactiva
+### 5. Lanzar el prototipo (elige una interfaz)
+
+#### Opción A — API FastAPI + frontend React (recomendado para integración)
+
+**Terminal 1 — backend:**
+
+```powershell
+uvicorn api.main:app --reload --port 8000
+```
+
+Documentación OpenAPI: **http://localhost:8000/docs**
+
+**Terminal 2 — frontend:**
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Abre **http://localhost:5173**. Vite hace proxy de `/generar` y `/health` hacia el puerto 8000.
+
+- **Mock LLM activo por defecto** — no requiere API key.
+- Carga el ejemplo de medicación o pega una nota y pulsa **Analizar**.
+- La respuesta JSON incluye `top1` (oración sospechosa) y scores por brazo.
+
+Ver [`api/README.md`](api/README.md) y [`frontend/README.md`](frontend/README.md).
+
+#### Opción B — Demo Streamlit (presentación en clase)
 
 ```bash
 streamlit run demo/app.py
 ```
 
-Abre **http://localhost:8501** en el navegador.
+Abre **http://localhost:8501**. Incluye páginas de Métricas, Configuración y consentimiento PHI.
 
-- **Mock LLM activo por defecto** — no requiere API key ni enviar datos a internet.
-- Carga un ejemplo de odontología CITIMED o pega una nota clínica y pulsa **Analizar nota**.
-- La primera vez que uses el brazo **LLM+RAG**, se descargará el modelo de embeddings (~15 s adicionales).
+Ver [`demo/README.md`](demo/README.md) para un guion de 2 minutos.
 
 ### Checklist de verificación
 
 | Paso | Comando / archivo esperado |
 |------|----------------------------|
 | Entorno activo | El prompt muestra `(.venv)` |
-| Dependencias OK | `python -c "import streamlit, sklearn, faiss"` sin error |
+| Dependencias OK | `python -c "import fastapi, uvicorn, sklearn, faiss"` sin error |
 | MEDEC presente | Existe `medec_try/MEDEC-MS/` |
 | Modelo entrenado | Existe `salidas_ajuste/modelo_ajustado.joblib` |
-| Demo en marcha | `streamlit run demo/app.py` → http://localhost:8501 |
+| API en marcha | `GET http://localhost:8000/health` → `modelo_tfidf_disponible: true` |
+| Frontend (opción A) | `npm run dev` en `frontend/` → http://localhost:5173 |
+| Streamlit (opción B) | `streamlit run demo/app.py` → http://localhost:8501 |
 
 ---
 
@@ -120,7 +149,7 @@ Abre **http://localhost:8501** en el navegador.
 
 ### API real (OpenAI, Mistral, Ollama)
 
-Por defecto la demo usa **mock LLM** (respuestas simuladas, todo local). Para usar un LLM real:
+Por defecto la API y la demo usan **mock LLM** (respuestas simuladas, todo local). Para usar un LLM real:
 
 1. Copia la plantilla de secrets:
 
@@ -138,7 +167,9 @@ Por defecto la demo usa **mock LLM** (respuestas simuladas, todo local). Para us
 
    También puedes usar un archivo `.env` en la raíz (copia `.env.example`).
 
-3. En la demo → **Configuración** → desmarca **Mock LLM** y acepta el consentimiento PHI.
+3. En la demo Streamlit → **Configuración** → desmarca **Mock LLM** y acepta el consentimiento PHI.
+
+   En la API FastAPI, envía `"mock_llm": false` en el body de `POST /generar` (requiere key configurada).
 
 ### Autenticación (piloto)
 
@@ -162,9 +193,12 @@ AUTH_USERS = { medico = "tu_contraseña" }
 | `Modelo TF-IDF no encontrado` | No se entrenó el modelo | Ejecuta `python s6/modelo_ajustado.py` |
 | `FileNotFoundError` al entrenar | MEDEC no clonado | `git clone --depth 1 https://github.com/abachaa/MEDEC.git medec_try` |
 | `ModuleNotFoundError: streamlit` | Entorno virtual no activado o pip incompleto | Activa `.venv` y `pip install -r requirements.txt` |
+| `503` en POST /generar | Modelo TF-IDF no entrenado | `python s6/modelo_ajustado.py` |
+| Frontend no conecta a la API | Backend apagado o puerto distinto | Arranca `uvicorn api.main:app --port 8000` |
 | Demo lenta la primera vez | Descarga de embeddings RAG | Normal; las siguientes cargas usan caché en `salidas_s7/` |
 | Error de permisos en PowerShell | Política de ejecución | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
 | Puerto 8501 ocupado | Otra instancia de Streamlit | `streamlit run demo/app.py --server.port 8502` |
+| Puerto 8000 ocupado | Otra instancia de uvicorn | `uvicorn api.main:app --port 8001` |
 
 ---
 
@@ -186,10 +220,17 @@ MIA_Deteccion_HC/
 │   ├── eval_tripartita.py       # TF-IDF vs LLM zero-shot vs LLM+RAG
 │   ├── analisis_por_tipo.py     # Recall por ErrorType
 │   ├── eval_idioma.py           # Sesgo EN vs ES (LLM)
-│   ├── inferencia.py            # Inferencia reutilizable (demo + scripts)
+│   ├── inferencia.py            # Inferencia reutilizable (API + demo + scripts)
 │   ├── config.yaml
 │   └── docs/informe_produccion.md
-├── demo/                        # Demo interactiva Streamlit
+├── api/                         # API REST FastAPI
+│   ├── main.py                  # GET /health, POST /generar
+│   ├── service.py               # InferenceService → analizar_nota()
+│   └── schemas.py               # Pydantic request/response
+├── frontend/                    # Cliente React + Vite
+│   ├── src/App.jsx
+│   └── vite.config.js           # Proxy → localhost:8000
+├── demo/                        # Demo Streamlit (alternativa)
 │   ├── app.py                   # Página principal — Análisis
 │   ├── pages/                   # Métricas, Acerca, Configuración
 │   ├── components/              # UI, auth, paneles
@@ -233,12 +274,15 @@ Orden recomendado y más scripts en [`s7/README.md`](s7/README.md).
 
 ---
 
-## Demo interactiva
+## Interfaces del prototipo
 
-Interfaz web para mostrar el flujo del prototipo al profesor o en clase.
+| Interfaz | Puerto | Uso |
+|----------|--------|-----|
+| **FastAPI + React** | 8000 + 5173 | Integración HTTP, OpenAPI `/docs`, UI moderna |
+| **Streamlit** | 8501 | Demo en clase, métricas embebidas, consentimiento PHI |
 
-**Modo por defecto:** mock LLM local, sin API key, banner verde indicando que ningún dato sale del equipo.
+**Modo por defecto:** mock LLM local, sin API key.
 
-Ver [`demo/README.md`](demo/README.md) para un guion de presentación de 2 minutos.
+Ver [`api/README.md`](api/README.md), [`frontend/README.md`](frontend/README.md) y [`demo/README.md`](demo/README.md).
 
 Ver [`s6/BITACORA.md`](s6/BITACORA.md) para el historial completo, [`s7/docs/informe_produccion.md`](s7/docs/informe_produccion.md) para riesgos de producción, [`s8/README.md`](s8/README.md) para el borrador histórico S8 y [`s10/README.md`](s10/README.md) para la entrega consolidada S10.

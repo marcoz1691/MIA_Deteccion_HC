@@ -1,18 +1,14 @@
-# Capturas de la demo Streamlit
-
-Figuras de apoyo incluidas desde evaluaciones e interpretabilidad:
+# Capturas de la demo / prototipo
 
 | Archivo | Descripción |
 |---------|-------------|
-| `figura_comparacion_tripartita.png` | Comparación ROC-AUC tripartita (salidas_s7) |
+| `demo_analisis.png` | Análisis mock — ejemplo medicación (alergia/amoxicilina) |
+| `demo_metricas.png` | Página métricas (ROC-AUC, AUPRC, localización) |
+| `demo_fallback.png` | Banner modo degradado / fallback TF-IDF |
+| `figura_comparacion_tripartita.png` | Comparación ROC-AUC tripartita |
 | `heatmap_recall_por_tipo.png` | Recall por ErrorType |
 | `shap_summary_bar.png` | Interpretabilidad TF-IDF (SHAP) |
+| `lime_caso_tp.png` | LIME caso verdadero positivo |
+| `curvas_tfidf.png` / `comparacion_brazos.png` | Figuras S6/S7 |
 
-Para capturas de pantalla de la demo en vivo (`streamlit run demo/app.py`):
-
-1. Vista análisis con ejemplo de medicación (banner mock verde)
-2. Tabla de scores por brazo
-3. Página Métricas (ROC-AUC 0.949, localización 84.6 %)
-4. Banner de fallback TF-IDF (modo degradado)
-
-Nombrar como `demo_analisis.png`, `demo_metricas.png`, etc., y añadir aquí antes de la entrega final.
+Regenerar: `python s10/capture_demo.py`

@@ -186,6 +186,8 @@ python s7/eval_citimed.py                       # pendiente corpus CITIMED
 **Cambios**
 - Informe S10 redactado desde el repositorio (no parcheado desde Word S8 desactualizado).
 - Carpeta `s10/` con PDF, Word editable, evidencias JSON/CSV/figuras y scripts de verificación.
+- **API FastAPI** (`api/`): `GET /health`, `POST /generar` → `InferenceService` → `analizar_nota()`.
+- **Frontend React** (`frontend/`): cliente Vite con proxy a la API (puertos 5173 / 8000).
 - Corrección `stop_words_tfidf()` en `s7/preprocesamiento.py` (sklearn no admite `'spanish'` como string).
 - Matriz §132–148 del plan S7 marcada como **implementada** en informe; LangChain/Docker/DVC/MLflow en § trabajo futuro.
 
@@ -207,6 +209,8 @@ Tripartita (500 oraciones, mock LLM): TF-IDF AUC 0.954; brazos LLM AUC≈0.5 (li
 ```bash
 python s10/run_verificacion.py
 python s10/generate_informe.py
+uvicorn api.main:app --reload --port 8000
+cd frontend && npm install && npm run dev
 ```
 
 **Entregables:** `s10/docs/S10_Avance_Consolidado.pdf` (Moodle), `s10/evidencias/`.

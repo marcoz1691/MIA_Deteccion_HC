@@ -18,7 +18,8 @@ Repositorio: [github.com/marcoz1691/MIA_Deteccion_HC](https://github.com/marcoz1
 | [`docs/S10_Avance_Consolidado.pdf`](docs/S10_Avance_Consolidado.pdf) | Informe final S10 (entrega Moodle) |
 | [`docs/S10_Avance_Consolidado.docx`](docs/S10_Avance_Consolidado.docx) | Fuente editable Word |
 | [`evidencias/`](evidencias/) | JSON, CSV y figuras reproducibles |
-| [`generate_informe.py`](generate_informe.py) | Regenera PDF/DOCX desde métricas del repo |
+| [`generate_informe.py`](generate_informe.py) | Regenera PDF/DOCX con figuras y capturas |
+| [`capture_demo.py`](capture_demo.py) | Genera capturas demo (análisis, métricas, fallback) |
 | [`organize_evidencias.py`](organize_evidencias.py) | Copia JSON/figuras a `evidencias/` |
 
 ## Evidencias (`evidencias/`)
@@ -53,11 +54,12 @@ python s10/generate_informe.py
 ## Relación con entregas anteriores
 
 - **S8:** [`s8/docs/S8_Informe_Final.docx`](../s8/docs/S8_Informe_Final.docx) — borrador **histórico** (9-ago-2026); el informe S10 se redactó desde el repositorio actual.
-- **Código:** `s6/`, `s7/`, `demo/` — fuente de verdad para métricas y arquitectura.
+- **Código:** `s6/`, `s7/`, `api/`, `frontend/`, `demo/` — fuente de verdad para métricas y arquitectura.
 - **Bitácora:** [`s6/BITACORA.md`](../s6/BITACORA.md)
 
 ## Checklist de coherencia documental
 
+- [x] API FastAPI + frontend React documentados en informe y README
 - [x] Matriz §132–148: tripartita, FAISS, demo, EN-ES → **Implementado**
 - [x] Anexo sin rutas obsoletas (`baseline_medec/`, `salidas_medec/`)
 - [x] AUPRC 0.419 con prevalencia 4.5 % declarada
