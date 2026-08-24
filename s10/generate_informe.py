@@ -53,7 +53,93 @@ def load_metrics() -> dict:
         or _load_json(EVID / "eval_idioma_en_es.json"),
         "tfidf_idioma": _load_json(ROOT / "salidas_s7" / "eval_tfidf_idioma.json")
         or _load_json(EVID / "eval_tfidf_idioma.json"),
+        "citimed_piloto": _load_json(ROOT / "salidas_s7" / "prueba_citimed.json"),
+        "eval_citimed": _load_json(ROOT / "salidas_s7" / "eval_citimed.json"),
     }
+
+
+def _citimed_piloto_text(citimed: dict, eval_c: dict) -> dict:
+    """Resume métricas del piloto CITIMED (avance, no corpus final)."""
+    ev = eval_c.get("metricas") or {}
+    inferencias = citimed.get("inferencias_piloto") or citimed.get("inferencias") or []
+    n_hist = len(citimed.get("anonimizados") or [])
+    n_oraciones_eval = eval_c.get("n_oraciones")
+    tiene_eval = bool(ev.get("roc_auc") is not None and n_oraciones_eval)
+    return {
+        "n_historias": n_hist or (1 if inferencias else 0),
+        "n_oraciones_eval": n_oraciones_eval,
+        "n_oraciones_inferencia": sum(i.get("n_oraciones", 0) for i in inferencias),
+        "roc": ev.get("roc_auc") if tiene_eval else None,
+        "auprc": ev.get("auprc") if tiene_eval else None,
+        "modo": eval_c.get("modo", "cross_domain"),
+        "entrenamiento": eval_c.get("entrenamiento", "MEDEC_train"),
+        "tiene_piloto": bool(inferencias or citimed.get("anonimizados")),
+        "tiene_eval": tiene_eval,
+    }
+
+
+def _fmt_opt(x: float | None, nd: int = 3) -> str:
+    return _fmt(x, nd) if x is not None else "—"
+
+
+def _bloque_verificacion_s10() -> list[tuple[str, str]]:
+    """§3.4 — FastAPI, utilidades CITIMED, tests y .gitignore."""
+    return [
+        ("Heading 2", "3.4. Verificación FastAPI y calidad del código (S10)"),
+        (
+            "Normal",
+            "Verificación operativa del backend (23-ago-2026): con "
+            "`uvicorn api.main:app --port 8000`, GET /health respondió status=ok y "
+            "modelo_tfidf_disponible=true (salidas_ajuste/modelo_ajustado.joblib). "
+            "POST /generar con nota de alergia a penicilina y prescripción de amoxicilina "
+            "(mock_llm=true) devolvió HTTP 200; top1=\"Se indica amoxicilina…\", alerta=true, "
+            "brazos tfidf + llm_zero + llm_rag activos. Documentación interactiva en /docs. "
+            "Frontend React (frontend/, puerto 5173) consume la misma API vía proxy Vite.",
+        ),
+        (
+            "Normal",
+            "Refactor del pipeline CITIMED (code review S10): s10/citimed_utils.py centraliza "
+            "extracción del cuerpo clínico, detección heurística de PHI residual y lectura de "
+            "salidas anonimizadas (.txt/.pdf). s10/probar_citimed.py separa eval cross-domain "
+            "(solo plantilla etiquetada) de inferencias_piloto; aborta si queda PHI (--force "
+            "solo depuración). demo/ejemplos.py reutiliza citimed_utils. Tests automatizados: "
+            "s10/test_citimed_pipeline.py (6 casos pytest: PHI, CSV, cabeceras).",
+        ),
+        (
+            "Normal",
+            "Controles de repositorio (.gitignore): data/citimed_odontologia.csv generado, "
+            "s10/anonimizador/salidas/, historia_ejemplo.txt con PHI aparente (uso local); "
+            "en git solo ejemplos sintéticos (ejemplos/historia_ejemplo.sintetico.txt) y salidas "
+            "anonimizadas de demostración. Entrega S10: consolidación en rama main pendiente de "
+            "commit/push final con anonimizador, cleanup CITIMED e informe regenerado.",
+        ),
+    ]
+
+
+def _insert_paragraphs_after(doc, anchor_contains: str, blocks: list[tuple[str, str]]):
+    """Inserta párrafos después de un ancla. blocks = [(estilo, texto), ...]. Retorna el último párrafo."""
+    from docx.oxml import OxmlElement
+    from docx.text.paragraph import Paragraph
+
+    anchor = _find_paragraph(doc, anchor_contains)
+    if anchor is None:
+        print(f"[warn] No se insertó bloque; ancla no encontrada: {anchor_contains[:50]}")
+        return None
+    prev = anchor._element
+    last_para = anchor
+    for style_name, text in blocks:
+        new_p = OxmlElement("w:p")
+        prev.addnext(new_p)
+        para = Paragraph(new_p, anchor._parent)
+        if style_name:
+            try:
+                para.style = style_name
+            except Exception:
+                pass
+        para.add_run(text)
+        prev = new_p
+        last_para = para
+    return last_para
 
 
 def _replace_paragraph_text(paragraph, new_text: str) -> None:
@@ -101,8 +187,8 @@ def _insert_picture_after(paragraph, image_path: Path, width_inches: float = 5.8
         cap_run.italic = True
 
 
-def _insert_picture_after_simple(doc, anchor_text: str, image_path: Path, caption: str, width: float = 5.8) -> None:
-    """Inserta figura después del párrafo que contiene anchor_text."""
+def _insert_picture_after_paragraph(paragraph, image_path: Path, caption: str, width: float = 5.8) -> None:
+    """Inserta figura inmediatamente después del párrafo dado."""
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.oxml import OxmlElement
     from docx.shared import Inches
@@ -112,24 +198,27 @@ def _insert_picture_after_simple(doc, anchor_text: str, image_path: Path, captio
         print(f"[warn] Figura no encontrada: {image_path}")
         return
 
-    anchor = _find_paragraph(doc, anchor_text)
-    if anchor is None:
-        print(f"[warn] Ancla no encontrada: {anchor_text[:40]}")
-        return
-
-    # Párrafo vacío + imagen
     new_p = OxmlElement("w:p")
-    anchor._element.addnext(new_p)
-    pic_para = Paragraph(new_p, anchor._parent)
+    paragraph._element.addnext(new_p)
+    pic_para = Paragraph(new_p, paragraph._parent)
     pic_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
     pic_para.add_run().add_picture(str(image_path), width=Inches(width))
 
     cap_p = OxmlElement("w:p")
     new_p.addnext(cap_p)
-    cap_para = Paragraph(cap_p, anchor._parent)
+    cap_para = Paragraph(cap_p, paragraph._parent)
     cap_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = cap_para.add_run(caption)
     run.italic = True
+
+
+def _insert_picture_after_simple(doc, anchor_text: str, image_path: Path, caption: str, width: float = 5.8) -> None:
+    """Inserta figura después del párrafo que contiene anchor_text."""
+    anchor = _find_paragraph(doc, anchor_text)
+    if anchor is None:
+        print(f"[warn] Ancla no encontrada: {anchor_text[:40]}")
+        return
+    _insert_picture_after_paragraph(anchor, image_path, caption, width)
 
 
 def _add_row(table, cells: list[str]) -> None:
@@ -171,6 +260,19 @@ def update_from_s8(m: dict) -> None:
     idioma = m["idioma"]
     delta_auc = idioma.get("delta_auc_en_minus_es", 0)
     tfidf_es = m.get("tfidf_idioma", {}).get("spanish", {}).get("test", {})
+    piloto = _citimed_piloto_text(m.get("citimed_piloto", {}), m.get("eval_citimed", {}))
+    if piloto["tiene_eval"]:
+        citimed_eval_txt = (
+            f"eval cross-domain sobre plantilla odontológica etiquetada "
+            f"(n={piloto['n_oraciones_eval']}): ROC-AUC {_fmt_opt(piloto['roc'])}, "
+            f"AUPRC {_fmt_opt(piloto['auprc'])}"
+        )
+    else:
+        citimed_eval_txt = "pipeline piloto CITIMED (eval cross-domain pendiente de ejecutar)"
+    piloto_infer_txt = (
+        f"inferencia piloto sobre {piloto['n_historias']} historia(s) anonimizada(s) "
+        f"({piloto['n_oraciones_inferencia']} oraciones, sin mezclar en métricas AUC)"
+    )
 
     # --- Portada / metadatos ---
     for p in doc.paragraphs:
@@ -198,11 +300,14 @@ def update_from_s8(m: dict) -> None:
             f"{_fmt(roc_ci[2])}), AUPRC {_fmt(auprc)} (prevalencia 4,5 %) y localiza la oración errónea "
             f"en {_pct(loc)} ({aciertos}/{n_notas} notas). Se entregaron comparación tripartita, índice "
             "FAISS+RAG, demo Streamlit, API FastAPI, frontend React, fallback TF-IDF, evaluaciones por "
-            f"tipo de error y sesgo EN-ES. Repositorio: {REPO_URL}.",
+            f"tipo de error y sesgo EN-ES. Como avance hacia CITIMED, se implementó anonimización local "
+            f"(s10/anonimizador/) y {citimed_eval_txt}; {piloto_infer_txt}. "
+            "Corpus clínico anotado y aval ético pendientes. "
+            f"Repositorio: {REPO_URL}.",
         )
 
     # --- §2.2 Herramientas ---
-    s22 = _find_paragraph(doc, "El pipeline se construyó con herramientas")
+    s22 = _find_paragraph(doc, "El pipeline se implementó") or _find_paragraph(doc, "El pipeline se construyó")
     if s22:
         _replace_paragraph_text(
             s22,
@@ -210,11 +315,14 @@ def update_from_s8(m: dict) -> None:
             "Regresión Logística), cliente OpenAI-compatible para LLM (s7/llm_client.py), "
             "sentence-transformers + FAISS para RAG (s7/rag_index.py, s7/knowledge/), inferencia "
             "unificada (s7/inferencia.py), demo Streamlit (demo/), API REST FastAPI (api/) y "
-            "frontend React (frontend/). Mock LLM activo por defecto; soporte Ollama on-premise "
-            "(OPENAI_BASE_URL=http://localhost:11434/v1) para PHI. Trabajo futuro (no entregado en "
-            "S10): orquestación LangChain/LlamaIndex, Docker Compose, DVC, MLflow operativo "
-            "(requirements-optional.txt, entorno separado). Reproducibilidad: SEED=42, particiones "
-            "oficiales MEDEC, métricas en salidas_ajuste/ y salidas_s7/.",
+            "frontend React (frontend/). Para CITIMED se añadió el servicio de anonimización "
+            "(s10/anonimizador/ANONIMIZADOR/: reglas Ecuador + spaCy NER), utilidades compartidas "
+            "s10/citimed_utils.py y s10/probar_citimed.py (anonimizar → inferencia ES → eval "
+            "cross-domain sobre plantilla etiquetada). Mock LLM activo por defecto; soporte "
+            "Ollama on-premise (OPENAI_BASE_URL=http://localhost:11434/v1) para PHI. Trabajo futuro "
+            "(no entregado en S10): orquestación LangChain/LlamaIndex, Docker Compose, DVC, MLflow "
+            "operativo (requirements-optional.txt, entorno separado). Reproducibilidad: SEED=42, "
+            "particiones oficiales MEDEC, métricas en salidas_ajuste/ y salidas_s7/.",
         )
 
     # --- Tabla métricas §3.2 (Table 1) ---
@@ -248,15 +356,16 @@ def update_from_s8(m: dict) -> None:
     # --- Placeholder Table 0 (CITIMED / tripartita / MLflow) ---
     for tbl in doc.tables:
         cell = tbl.rows[0].cells[0].text
-        if "Sustituir/complementar MEDEC" in cell:
+        if "Sustituir/complementar MEDEC" in cell or "Corpus CITIMED en español: AVANCE PILOTO" in cell:
             tbl.rows[0].cells[0].text = (
                 "Actualización S10:\n"
                 "• Comparación tripartita TF-IDF / LLM / LLM+RAG: IMPLEMENTADA "
                 f"(s7/eval_tripartita.py; subset n={n_trip}, mock LLM={mock}).\n"
                 f"  TF-IDF ROC-AUC={_fmt(tf_t.get('roc_auc', roc))}; LLM zero-shot={_fmt(llm_t.get('roc_auc', 0.5))}; "
                 f"LLM+RAG={_fmt(rag_t.get('roc_auc', 0.5))}. McNemar TF-IDF vs LLM: p={_fmt(mcnemar_p)}.\n"
-                "• Corpus CITIMED anonimizado en español: PENDIENTE (aval comité de ética; "
-                "plantilla en data/citimed_odontologia.example.csv).\n"
+                "• Corpus CITIMED en español: AVANCE PILOTO S10 — anonimizador funcional "
+                f"(s10/anonimizador/); {piloto_infer_txt}; {citimed_eval_txt}. "
+                "Corpus clínico anotado y aval comité de ética: PENDIENTE.\n"
                 "• MLflow operativo: PLAN FUTURO (requirements-optional.txt; venv separado numpy<2)."
             )
         elif "Reportar resultados de la comparación tripartita" in cell:
@@ -289,7 +398,14 @@ def update_from_s8(m: dict) -> None:
         elif "Formalizar el protocolo de anonimización" in cell:
             tbl.rows[0].cells[0].text = (
                 "Riesgos y mitigaciones implementadas:\n"
+                "• Servicio de anonimización local (s10/anonimizador/): reglas + NER, pseudonimización "
+                "consistente, fechas desplazadas, auditoría con hashes (sin PHI en claro). Revisión humana "
+                "por muestreo recomendada antes de liberar datos.\n"
                 "• Mock LLM por defecto; consentimiento PHI en demo (demo/components/security.py).\n"
+                "• .gitignore: CSV/salidas CITIMED generadas, historia_ejemplo.txt local; solo "
+                "ejemplos sintéticos versionados (ejemplos/historia_ejemplo.sintetico.txt).\n"
+                "• Pipeline aborta si PHI residual (s10/citimed_utils.py); tests en "
+                "s10/test_citimed_pipeline.py.\n"
                 "• Auditoría SHA-256 sin texto clínico (salidas_s7/audit.log).\n"
                 "• Fallback TF-IDF si falla API LLM (s7/test_fallback.py; modo_degradado=True).\n"
                 "• Evaluación sesgo EN-ES: s7/eval_idioma.py, s7/eval_tfidf_idioma.py.\n"
@@ -303,7 +419,7 @@ def update_from_s8(m: dict) -> None:
             "Comparación tripartita": "Implementado (S7/S10)",
             "Índice FAISS": "Implementado (s7/rag_index.py)",
             "MLflow operativo": "Plan futuro",
-            "Corpus de CITIMED": "En gestión / pendiente ética",
+            "Corpus de CITIMED": "Piloto S10 (anonimizador + 1 historia)",
             "Interpretabilidad con cita": "Implementado (SHAP/LIME + RAG demo)",
             "Redacción final": "S10 consolidado",
         }
@@ -336,7 +452,7 @@ def update_from_s8(m: dict) -> None:
         )
 
     # --- §7 Conclusiones ---
-    s7a = _find_paragraph(doc, "Hasta la semana 8, el proyecto cuenta")
+    s7a = _find_paragraph(doc, "Hasta la semana 10") or _find_paragraph(doc, "Hasta la semana 8")
     if s7a:
         _replace_paragraph_text(
             s7a,
@@ -344,16 +460,20 @@ def update_from_s8(m: dict) -> None:
             "implementada y evaluada sobre MEDEC, pipeline reproducible (s6/, s7/, api/, demo/) y "
             f"línea base cuantitativa: ROC-AUC {_fmt(roc)}, AUPRC {_fmt(auprc)}, localización "
             f"{_pct(loc)}. La comparación tripartita confirma ventaja de TF-IDF en modo mock "
-            f"(LLM AUC≈0,5); evaluación con API/Ollama real pendiente. El criterio de éxito para "
-            "piloto CITIMED: mantener recall en farmacoterapia/diagnóstico, desplegar con Ollama "
+            f"(LLM AUC≈0,5); evaluación con API/Ollama real pendiente. Como avance CITIMED (no corpus "
+            f"final), se validó anonimización local, {piloto_infer_txt} y {citimed_eval_txt}. "
+            "API FastAPI verificada (GET /health, POST /generar con alerta en ejemplo medicación). "
+            "El criterio de éxito para piloto clínico: corpus anotado "
+            "con aval ético, mantener recall en farmacoterapia/diagnóstico, desplegar con Ollama "
             "on-premise y fallback transparente.",
         )
     s7b = _find_paragraph(doc, "Trabajo restante para la versión final:")
     if s7b:
         _replace_paragraph_text(
             s7b,
-            "Trabajo futuro (post-S10): corpus CITIMED anonimizado, eval tripartita con API real, "
-            "cascada TF-IDF→LLM codificada, Docker/DVC/MLflow, corrección sugerida y faithfulness RAG.",
+            "Trabajo futuro (post-S10): corpus CITIMED clínico anotado con aval ético, ampliar lote "
+            "anonimizado, eval tripartita con API/Ollama real, cascada TF-IDF→LLM codificada, "
+            "Docker/DVC/MLflow, corrección sugerida y faithfulness RAG.",
         )
 
     # --- Anexo técnico ---
@@ -363,25 +483,92 @@ def update_from_s8(m: dict) -> None:
             anexo,
             "Todos los resultados son reproducibles desde la raíz del repositorio MIA_Deteccion_HC/ "
             f"(SEED=42, particiones oficiales MEDEC). Estructura: s6/ (TF-IDF), s7/ (LLM, RAG, evals), "
-            "api/ (FastAPI), frontend/ (React), demo/ (Streamlit), s10/ (evidencias + informe). "
-            "Salidas generadas: salidas_ajuste/ (modelo_ajustado.joblib), salidas_s7/ (métricas, FAISS). "
-            "Dependencias: requirements.txt (scikit-learn, openai, faiss-cpu, sentence-transformers, "
-            "streamlit, fastapi, uvicorn). Comandos: python s6/modelo_ajustado.py; "
-            "python s7/eval_tripartita.py --mock-llm --max-oraciones 500; python s7/analisis_por_tipo.py; "
-            "python s7/eval_idioma.py --mock-llm --subset 200; python s7/test_fallback.py; "
-            "streamlit run demo/app.py; uvicorn api.main:app --port 8000. "
-            f"Evidencias: s10/evidencias/. Repositorio: {REPO_URL}.",
+            "api/ (FastAPI), frontend/ (React), demo/ (Streamlit), s10/ (evidencias, informe, anonimizador). "
+            "Salidas: salidas_ajuste/, salidas_s7/ (incl. prueba_citimed.json). Comandos: "
+            "python s6/modelo_ajustado.py; python s7/eval_tripartita.py --mock-llm --max-oraciones 500; "
+            "python s7/test_fallback.py; python s10/probar_citimed.py; "
+            "python -m pytest s10/test_citimed_pipeline.py -q; streamlit run demo/app.py; "
+            "uvicorn api.main:app --port 8000 (verificar GET /health y POST /generar en /docs). "
+            f"Evidencias: s10/evidencias/. Repositorio: {REPO_URL}. "
+            "Nota entrega: commit final S10 (anonimizador + cleanup CITIMED + informe) pendiente en git.",
         )
 
+    # --- §3.3 Piloto CITIMED (avance, no corpus final) ---
+    ultimo_piloto = None
+    if piloto["tiene_piloto"] and not _find_paragraph(doc, "3.3. Piloto CITIMED"):
+        eval_párrafo = (
+            f"Eval cross-domain sobre plantilla odontológica etiquetada "
+            f"(n={piloto['n_oraciones_eval']} oraciones): ROC-AUC = {_fmt_opt(piloto['roc'])}, "
+            f"AUPRC = {_fmt_opt(piloto['auprc'])}."
+            if piloto["tiene_eval"]
+            else "Eval cross-domain sobre plantilla odontológica: pendiente de ejecutar s10/probar_citimed.py."
+        )
+        ultimo_piloto = _insert_paragraphs_after(
+            doc,
+            "Un matiz importante: al reagregar",
+            [
+                ("Heading 2", "3.3. Piloto CITIMED — anonimización e integración (avance S10)"),
+                (
+                    "Normal",
+                    "Como avance hacia el despliegue en CITIMED (no como corpus clínico final), se "
+                    "implementó el servicio de anonimización en s10/anonimizador/ANONIMIZADOR/ "
+                    "(reglas para identificadores ecuatorianos + NER spaCy, pseudonimización consistente, "
+                    "fechas desplazadas y auditoría sin PHI en claro). El script s10/probar_citimed.py "
+                    "ejecuta el flujo: historia → anonimizar → inferencia en español (TF-IDF + LLM mock). "
+                    "La evaluación cross-domain usa solo la plantilla odontológica etiquetada; las historias "
+                    "anonimizadas del piloto se reportan aparte (sin mezclar labels artificiales).",
+                ),
+                (
+                    "Normal",
+                    f"Inferencia piloto: {piloto['n_historias']} historia(s) anonimizada(s), "
+                    f"{piloto['n_oraciones_inferencia']} oraciones segmentadas. {eval_párrafo} "
+                    "Estas cifras son preliminares (subset pequeño) y no sustituyen validación con corpus "
+                    "CITIMED anotado y aval del comité de ética. Reporte: salidas_s7/prueba_citimed.json.",
+                ),
+                (
+                    "Normal",
+                    "Limitaciones del piloto: historias de ejemplo sintéticas; métricas cross-domain "
+                    "sensibles al tamaño muestral; anonimización automática requiere revisión humana por "
+                    "muestreo antes de uso clínico. Trabajo pendiente: lote anonimizado institucional, "
+                    "anotación de inconsistencias y evaluación con Ollama on-premise.",
+                ),
+            ],
+        )
+
+    # --- §3.4 Verificación FastAPI y calidad código ---
+    if not _find_paragraph(doc, "3.4. Verificación FastAPI"):
+        ancla_34 = "Limitaciones del piloto"
+        if _find_paragraph(doc, ancla_34) is None:
+            ancla_34 = "Un matiz importante: al reagregar"
+        _insert_paragraphs_after(doc, ancla_34, _bloque_verificacion_s10())
+
     # --- Figuras embebidas ---
-    figures = [
+    for anchor, path, caption in [
         ("Figura 1 (S6)", EVID / "figura_ajuste.png", "Figura 1. Curvas ROC/PR y lift — baseline vs ajustado (S6)."),
         ("Figura 2 (S7)", CAP / "figura_comparacion_tripartita.png", "Figura 2. Comparación tripartita TF-IDF / LLM / LLM+RAG."),
-        ("Un matiz importante: al reagregar", CAP / "heatmap_recall_por_tipo.png", "Figura 3. Recall por ErrorType (TF-IDF)."),
-        ("En LLM+RAG, la demo muestra", CAP / "shap_summary_bar.png", "Figura 4. SHAP summary (TF-IDF)."),
-    ]
-    for anchor, path, caption in figures:
+    ]:
         _insert_picture_after_simple(doc, anchor, path, caption)
+
+    if ultimo_piloto is not None:
+        _insert_picture_after_paragraph(
+            ultimo_piloto,
+            CAP / "heatmap_recall_por_tipo.png",
+            "Figura 3. Recall por ErrorType (TF-IDF).",
+        )
+    else:
+        _insert_picture_after_simple(
+            doc,
+            "Un matiz importante: al reagregar",
+            CAP / "heatmap_recall_por_tipo.png",
+            "Figura 3. Recall por ErrorType (TF-IDF).",
+        )
+
+    _insert_picture_after_simple(
+        doc,
+        "En LLM+RAG, la demo muestra",
+        CAP / "shap_summary_bar.png",
+        "Figura 4. SHAP summary (TF-IDF).",
+    )
 
     anexo_para = _find_paragraph(doc, "Evidencias: s10/evidencias/")
     if anexo_para is None:

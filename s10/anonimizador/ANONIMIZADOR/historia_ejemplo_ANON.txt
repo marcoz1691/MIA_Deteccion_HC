@@ -1,0 +1,36 @@
+[ORG_1] - CLÍNICA CITIMED
+N.º de historia clínica: HC-[NUM_HISTORIA]
+Afiliación IESS: [NUM_HISTORIA]
+
+DATOS DEL PACIENTE
+Nombre: [PACIENTE_1]
+Cédula: [CEDULA]
+Fecha de nacimiento: 27/08/1957
+Edad: 67 años
+Sexo: masculino
+Teléfono: [TELEFONO]
+Correo: [EMAIL]
+Dirección: Av. Amazonas [LUGAR_4] y [LUGAR_3], [LUGAR_2]
+
+INGRESO
+Fecha de ingreso: 19/07/2024
+Médico tratante: Dra. [MEDICO_1]
+Motivo de consulta: disnea de esfuerzo y edema en miembros inferiores.
+
+EVOLUCIÓN
+El paciente [PACIENTE_1] refiere cuadro de 5 días. Antecedentes: hipertensión
+arterial de larga data, alergia documentada a la penicilina. La Dra. [MEDICO_1] indica
+control de presión arterial. Se contacta a la esposa, [PERSONA_1], al número
+[TELEFONO] para autorización.
+
+DIAGNÓSTICO
+Insuficiencia cardíaca congestiva.
+
+TRATAMIENTO
+Enalapril 10 mg cada 12 horas. Se solicita interconsulta con el Dr. [MEDICO_2]
+del [LUGAR_1].
+
+ALTA
+Fecha de alta: 25/07/2024
+Se otorga el alta con indicaciones. Control en 15 días.
+Responsable del alta: Dra. [MEDICO_1] - correo: [EMAIL]

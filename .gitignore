@@ -231,4 +231,12 @@ salidas/
 salidas_medec/
 salidas_s7/
 salidas_s7/audit.log
+data/citimed_odontologia.csv
+s10/anonimizador/salidas/
+# Historias con PHI aparente: usar solo localmente (commit ejemplos/*.sintetico.txt)
+s10/anonimizador/ANONIMIZADOR/historia_ejemplo.txt
+s10/anonimizador/ANONIMIZADOR/historia_ejemplo_ANON.pdf
+# Temporales Microsoft Word
+~$*
+~WRL*.tmp
 .env

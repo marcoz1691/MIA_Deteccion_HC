@@ -9,6 +9,7 @@ from s7.llm_client import LLMUnavailableError
 
 from api.schemas import GenerarRequest, GenerarResponse, HealthResponse
 from api.service import InferenceService
+from api.settings import llm_api_configurada, resolve_mock_llm
 
 _service: InferenceService | None = None
 
@@ -49,10 +50,14 @@ app.add_middleware(
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     svc = get_service()
+    mock_llm, mock_forzado = resolve_mock_llm(True)
     return HealthResponse(
         status="ok",
         modelo_tfidf_disponible=svc.modelo_tfidf_disponible,
         modelo_tfidf_path=str(svc.model_path),
+        mock_llm=mock_llm,
+        mock_llm_forzado=mock_forzado,
+        llm_api_configurada=llm_api_configurada(),
     )
 
 

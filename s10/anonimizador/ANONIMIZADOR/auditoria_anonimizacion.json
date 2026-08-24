@@ -1,0 +1,164 @@
+[
+  {
+    "doc_id": "historia_ejemplo",
+    "total_phi": 24,
+    "por_tipo": {
+      "EMAIL": 2,
+      "PER": 9,
+      "FECHA": 3,
+      "LOC": 4,
+      "TELEFONO": 2,
+      "CEDULA": 1,
+      "NUM_HISTORIA": 2,
+      "ORG": 1
+    },
+    "detalle": [
+      {
+        "tipo": "EMAIL",
+        "hash": "536904ae2581",
+        "reemplazo": "[EMAIL]",
+        "len": 22
+      },
+      {
+        "tipo": "PER",
+        "hash": "83745921ab30",
+        "reemplazo": "[MEDICO_1]",
+        "len": 5
+      },
+      {
+        "tipo": "PER",
+        "hash": "592396abfacc",
+        "reemplazo": "[MEDICO_1]",
+        "len": 8
+      },
+      {
+        "tipo": "PER",
+        "hash": "bd4ef97c6d6a",
+        "reemplazo": "[MEDICO_1]",
+        "len": 5
+      },
+      {
+        "tipo": "FECHA",
+        "hash": "a467242b2f1e",
+        "reemplazo": "25/07/2024",
+        "len": 10
+      },
+      {
+        "tipo": "LOC",
+        "hash": "790138a89324",
+        "reemplazo": "[LUGAR_1]",
+        "len": 31
+      },
+      {
+        "tipo": "PER",
+        "hash": "a689564b425a",
+        "reemplazo": "[MEDICO_2]",
+        "len": 14
+      },
+      {
+        "tipo": "TELEFONO",
+        "hash": "12a763dadf0c",
+        "reemplazo": "[TELEFONO]",
+        "len": 10
+      },
+      {
+        "tipo": "PER",
+        "hash": "0c5e172b1d03",
+        "reemplazo": "[PERSONA_1]",
+        "len": 18
+      },
+      {
+        "tipo": "PER",
+        "hash": "83745921ab30",
+        "reemplazo": "[MEDICO_1]",
+        "len": 5
+      },
+      {
+        "tipo": "PER",
+        "hash": "6c2f2bba16c8",
+        "reemplazo": "[PACIENTE_1]",
+        "len": 17
+      },
+      {
+        "tipo": "PER",
+        "hash": "476404044153",
+        "reemplazo": "[MEDICO_1]",
+        "len": 20
+      },
+      {
+        "tipo": "FECHA",
+        "hash": "cfa02b04e2af",
+        "reemplazo": "19/07/2024",
+        "len": 10
+      },
+      {
+        "tipo": "LOC",
+        "hash": "88e351d0842a",
+        "reemplazo": "[LUGAR_2]",
+        "len": 5
+      },
+      {
+        "tipo": "LOC",
+        "hash": "c9ce001f6f4b",
+        "reemplazo": "[LUGAR_3]",
+        "len": 5
+      },
+      {
+        "tipo": "LOC",
+        "hash": "7f37b110dbbc",
+        "reemplazo": "[LUGAR_4]",
+        "len": 7
+      },
+      {
+        "tipo": "EMAIL",
+        "hash": "c3d866b08ff7",
+        "reemplazo": "[EMAIL]",
+        "len": 20
+      },
+      {
+        "tipo": "TELEFONO",
+        "hash": "22c884e8af77",
+        "reemplazo": "[TELEFONO]",
+        "len": 10
+      },
+      {
+        "tipo": "FECHA",
+        "hash": "33efa6f47311",
+        "reemplazo": "27/08/1957",
+        "len": 10
+      },
+      {
+        "tipo": "CEDULA",
+        "hash": "e3ac8f77512b",
+        "reemplazo": "[CEDULA]",
+        "len": 10
+      },
+      {
+        "tipo": "PER",
+        "hash": "4fc3782a1130",
+        "reemplazo": "[PACIENTE_1]",
+        "len": 25
+      },
+      {
+        "tipo": "NUM_HISTORIA",
+        "hash": "78a7980c98b4",
+        "reemplazo": "[NUM_HISTORIA]",
+        "len": 10
+      },
+      {
+        "tipo": "NUM_HISTORIA",
+        "hash": "a32ac1a251a8",
+        "reemplazo": "[NUM_HISTORIA]",
+        "len": 6
+      },
+      {
+        "tipo": "ORG",
+        "hash": "40672ed55da2",
+        "reemplazo": "[ORG_1]",
+        "len": 16
+      }
+    ],
+    "ner": true,
+    "fechas_desplazadas": true
+  }
+]
