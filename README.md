@@ -25,7 +25,8 @@ Regenerar informe y evidencias:
 
 ```bash
 python s10/organize_evidencias.py   # copia JSON/figuras a s10/evidencias/
-python s10/generate_informe.py      # Word + PDF desde métricas del repo
+python s10/capture_demo.py          # capturas del prototipo
+python s10/generate_informe.py      # Word S8 corregido + PDF (requiere MS Word en Windows)
 python s10/run_verificacion.py      # batería completa (opcional, ~10 min)
 ```
 
