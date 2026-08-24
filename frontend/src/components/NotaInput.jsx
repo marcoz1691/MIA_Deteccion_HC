@@ -9,9 +9,12 @@ export default function NotaInput({
   onIdiomaChange,
   mockLlm,
   onMockLlmChange,
+  showMockOption = false,
+  mockLlmForced = false,
   loading,
   canAnalyze,
   backendOk,
+  showBackendHint = false,
   onAnalizar,
 }) {
   const chars = nota.trim().length;
@@ -50,7 +53,11 @@ export default function NotaInput({
       />
       <div className="meta-row">
         <span>{chars} caracteres</span>
-        <span>{mockLlm ? "Mock LLM · local" : "LLM real · API key"}</span>
+        {showMockOption ? (
+          <span>{mockLlm ? "Mock LLM · local" : "LLM real · API key"}</span>
+        ) : (
+          <span>TF-IDF · LLM · RAG</span>
+        )}
       </div>
 
       <details className="advanced">
@@ -67,16 +74,21 @@ export default function NotaInput({
               <option value="english">English</option>
             </select>
           </label>
-          <label className="inline checkbox">
-            <input
-              type="checkbox"
-              checked={mockLlm}
-              onChange={(e) => onMockLlmChange(e.target.checked)}
-              disabled={loading}
-            />
-            Mock LLM (sin API key)
-          </label>
+          {showMockOption && (
+            <label className="inline checkbox">
+              <input
+                type="checkbox"
+                checked={mockLlm}
+                onChange={(e) => onMockLlmChange(e.target.checked)}
+                disabled={loading || mockLlmForced}
+              />
+              Mock LLM (sin API key)
+            </label>
+          )}
         </div>
+        {showMockOption && mockLlmForced && (
+          <p className="hint">Modo LLM fijado por el servidor (MOCK_LLM en el entorno).</p>
+        )}
       </details>
 
       <button
@@ -87,7 +99,7 @@ export default function NotaInput({
       >
         {loading ? "Analizando oraciones…" : "Analizar nota"}
       </button>
-      {!backendOk && (
+      {showBackendHint && !backendOk && (
         <p className="hint warn-text">Arranca FastAPI en el puerto 8000 para habilitar el análisis.</p>
       )}
     </section>

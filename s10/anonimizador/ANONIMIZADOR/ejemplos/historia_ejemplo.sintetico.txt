@@ -1,0 +1,36 @@
+HISTORIA CLÍNICA - CLÍNICA CITIMED (EJEMPLO SINTÉTICO — NO CONTIENE DATOS REALES)
+N.º de historia clínica: HC-EJEMPLO-0001
+Afiliación IESS: 0000000000
+
+DATOS DEL PACIENTE
+Nombre: Paciente Ejemplo Sintético
+Cédula: 0000000000
+Fecha de nacimiento: 01/01/1960
+Edad: 65 años
+Sexo: masculino
+Teléfono: 0000000000
+Correo: paciente.ejemplo@example.invalid
+Dirección: Calle Ficticia 123, Ciudad Ejemplo
+
+INGRESO
+Fecha de ingreso: 01/01/2025
+Médico tratante: Dra. Médico Ejemplo
+Motivo de consulta: disnea de esfuerzo y edema en miembros inferiores.
+
+EVOLUCIÓN
+El paciente Ejemplo Sintético refiere cuadro de 5 días. Antecedentes: hipertensión
+arterial de larga data, alergia documentada a la penicilina. La Dra. Ejemplo indica
+control de presión arterial. Se contacta al familiar de referencia al número 0000000000
+para autorización.
+
+DIAGNÓSTICO
+Insuficiencia cardíaca congestiva.
+
+TRATAMIENTO
+Enalapril 10 mg cada 12 horas. Se solicita interconsulta con el Dr. Especialista
+del Hospital Ejemplo.
+
+ALTA
+Fecha de alta: 10/01/2025
+Se otorga el alta con indicaciones. Control en 15 días.
+Responsable del alta: Dra. Médico Ejemplo - correo: medico.ejemplo@example.invalid

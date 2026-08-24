@@ -11,7 +11,13 @@ IdiomaLiteral = Literal["english", "spanish"]
 
 class GenerarRequest(BaseModel):
     nota_clinica: str = Field(..., min_length=1, description="Texto libre de la nota clínica.")
-    mock_llm: bool = Field(True, description="Usar respuestas LLM simuladas (sin API key).")
+    mock_llm: bool = Field(
+        True,
+        description=(
+            "Solicitar respuestas LLM simuladas. Puede ser ignorado si el servidor "
+            "define la variable de entorno MOCK_LLM."
+        ),
+    )
     idioma: IdiomaLiteral = "spanish"
     brazos: list[BrazoLiteral] = Field(
         default_factory=lambda: ["tfidf", "llm_zero", "llm_rag"],
@@ -55,3 +61,10 @@ class HealthResponse(BaseModel):
     status: str
     modelo_tfidf_disponible: bool
     modelo_tfidf_path: str
+    mock_llm: bool = Field(description="Modo mock LLM efectivo en el servidor.")
+    mock_llm_forzado: bool = Field(
+        description="True si MOCK_LLM está definido en el entorno (ignora el cliente)."
+    )
+    llm_api_configurada: bool = Field(
+        description="True si hay OPENAI_API_KEY o MISTRAL_API_KEY en el servidor."
+    )

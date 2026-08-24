@@ -20,6 +20,8 @@ Repositorio: [github.com/marcoz1691/MIA_Deteccion_HC](https://github.com/marcoz1
 | [`evidencias/`](evidencias/) | JSON, CSV y figuras reproducibles |
 | [`generate_informe.py`](generate_informe.py) | Parte del Word S8, aplica correcciones del repo y exporta PDF |
 | [`capture_demo.py`](capture_demo.py) | Genera capturas demo (análisis, métricas, fallback) |
+| [`probar_citimed.py`](probar_citimed.py) | Anonimiza historias CITIMED → inferencia → CSV → eval |
+| [`anonimizador/ANONIMIZADOR/`](anonimizador/ANONIMIZADOR/) | Servicio de anonimización (texto/PDF) |
 | [`organize_evidencias.py`](organize_evidencias.py) | Copia JSON/figuras a `evidencias/` |
 
 ## Evidencias (`evidencias/`)
@@ -51,7 +53,26 @@ python s10/organize_evidencias.py
 python s10/generate_informe.py
 ```
 
-## Relación con entregas anteriores
+## Pipeline CITIMED (anonimizador + inferencia)
+
+Historias de ejemplo sintéticas en `s10/anonimizador/ANONIMIZADOR/ejemplos/` (p. ej.
+`historia_ejemplo.sintetico.txt`). **No commitear** historias con PHI real; el archivo
+`historia_ejemplo.txt` con datos ficticios realistas está en `.gitignore`.
+
+```bash
+# Requiere: python -m spacy download es_core_news_md (mejor anonimización)
+python s10/probar_citimed.py
+python s10/probar_citimed.py --entrada s10/anonimizador/ANONIMIZADOR/carpeta_historias/
+```
+
+Flujo:
+1. **Anonimiza** → `s10/anonimizador/salidas/*_ANON.txt`
+2. **Inferencia** TF-IDF + LLM mock sobre texto clínico en español
+3. **CSV** → `data/citimed_odontologia.csv` (plantilla odontología + historias anonimizadas)
+4. **Eval** cross-domain MEDEC→CITIMED → `salidas_s7/eval_citimed.json`
+
+Reporte completo: `salidas_s7/prueba_citimed.json`. La demo Streamlit carga automáticamente historias anonimizadas de `s10/anonimizador/salidas/`.
+
 
 - **S8:** [`s8/docs/S8_Informe_Final.docx`](../s8/docs/S8_Informe_Final.docx) — **plantilla de formato**; el informe S10 se genera copiando este Word y aplicando correcciones desde el repositorio (`generate_informe.py`).
 - **Código:** `s6/`, `s7/`, `api/`, `frontend/`, `demo/` — fuente de verdad para métricas y arquitectura.

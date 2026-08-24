@@ -18,21 +18,25 @@ export async function healthCheck() {
 
 export async function analizarNota({
   nota,
-  mockLlm = true,
+  mockLlm,
   idioma = "spanish",
   brazos = ["tfidf", "llm_zero", "llm_rag"],
   umbral = 0.5,
 }) {
+  const body = {
+    nota_clinica: nota,
+    idioma,
+    brazos,
+    umbral,
+  };
+  if (mockLlm !== undefined) {
+    body.mock_llm = mockLlm;
+  }
+
   const res = await fetch(`${API_BASE}/generar`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      nota_clinica: nota,
-      mock_llm: mockLlm,
-      idioma,
-      brazos,
-      umbral,
-    }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();

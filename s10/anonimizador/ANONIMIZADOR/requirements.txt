@@ -1,0 +1,9 @@
+# Anonimizador de historias clínicas — dependencias (probado con Python 3.12)
+spacy==3.8.15
+pymupdf==1.28.2
+
+# Modelo de español de spaCy (necesario para detectar nombres/lugares).
+# Instalar con:
+#   python -m spacy download es_core_news_md
+# o directamente:
+#   pip install https://github.com/explosion/spacy-models/releases/download/es_core_news_md-3.8.0/es_core_news_md-3.8.0-py3-none-any.whl

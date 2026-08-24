@@ -15,11 +15,19 @@ export default function App() {
   const [error, setError] = useState(null);
   const [health, setHealth] = useState(null);
 
+  const isDev = import.meta.env.DEV;
+
   useEffect(() => {
+    if (!isDev) return;
     healthCheck()
-      .then(setHealth)
+      .then((data) => {
+        setHealth(data);
+        if (data.mock_llm_forzado) {
+          setMockLlm(data.mock_llm);
+        }
+      })
       .catch(() => setHealth({ status: "offline", modelo_tfidf_disponible: false }));
-  }, []);
+  }, [isDev]);
 
   function handleEjemploChange(id) {
     const ejemplo = EJEMPLOS.find((e) => e.id === id);
@@ -39,7 +47,7 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const data = await analizarNota({ nota: texto, mockLlm, idioma });
+      const data = await analizarNota({ nota: texto, mockLlm: isDev ? mockLlm : undefined, idioma });
       setResultado(data);
     } catch (exc) {
       setResultado(null);
@@ -49,7 +57,8 @@ export default function App() {
     }
   }
 
-  const backendOk = health?.status === "ok";
+  // En producción el usuario ve una sola app; el estado del backend es interno (LB/K8s).
+  const backendOk = isDev ? health?.status === "ok" : true;
 
   return (
     <div className="app">
@@ -63,12 +72,14 @@ export default function App() {
         </div>
         <div className="topbar-meta">
           <p className="lede">Análisis por oración · TF-IDF · LLM · RAG</p>
-          <div className={`status ${backendOk ? "ok" : "down"}`}>
-            <span className="dot" />
-            {backendOk
-              ? `Backend listo${health.modelo_tfidf_disponible ? " · TF-IDF" : " · sin TF-IDF"}`
-              : "Backend no disponible"}
-          </div>
+          {isDev && (
+            <div className={`status ${backendOk ? "ok" : "down"}`}>
+              <span className="dot" />
+              {backendOk
+                ? `Backend listo${health.modelo_tfidf_disponible ? " · TF-IDF" : " · sin TF-IDF"}`
+                : "Backend no disponible"}
+            </div>
+          )}
         </div>
       </header>
 
@@ -91,9 +102,12 @@ export default function App() {
             onIdiomaChange={setIdioma}
             mockLlm={mockLlm}
             onMockLlmChange={setMockLlm}
+            showMockOption={isDev}
+            mockLlmForced={Boolean(health?.mock_llm_forzado)}
             loading={loading}
             canAnalyze={Boolean(nota.trim())}
             backendOk={backendOk}
+            showBackendHint={isDev}
             onAnalizar={handleAnalizar}
           />
           <ResultadosPanel resultado={resultado} error={error} loading={loading} />

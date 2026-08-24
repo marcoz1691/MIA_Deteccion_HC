@@ -43,7 +43,7 @@ idioma:
 
 citimed:
   data_path: data/citimed_odontologia.csv
-  col_texto: texto
+  col_texto: oracion
   col_label: label
   col_oracion_id: oracion_id
   col_nota_id: nota_id

@@ -8,6 +8,7 @@ from s7.llm_client import LLMClient, LLMUnavailableError
 from s7.rag_index import RAGIndex
 
 from api.schemas import GenerarRequest, GenerarResponse, OracionResponse, Top1Response
+from api.settings import resolve_mock_llm
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -67,7 +68,7 @@ class InferenceService:
             allow_mock_without_key=bool(mock_llm),
         )
 
-    def _validate_resources(self, request: GenerarRequest) -> None:
+    def _validate_resources(self, request: GenerarRequest, mock_llm: bool) -> None:
         brazos = list(request.brazos)
         needs_tfidf = "tfidf" in brazos
         needs_llm = any(b.startswith("llm_") for b in brazos)
@@ -78,7 +79,7 @@ class InferenceService:
                 "Entrena con: python s6/modelo_ajustado.py"
             )
 
-        if needs_llm and not request.mock_llm:
+        if needs_llm and not mock_llm:
             try:
                 self._build_llm_client(mock_llm=False)
             except LLMUnavailableError as exc:
@@ -88,7 +89,8 @@ class InferenceService:
                     ) from exc
 
     def generar(self, request: GenerarRequest) -> GenerarResponse:
-        self._validate_resources(request)
+        mock_llm, _ = resolve_mock_llm(request.mock_llm)
+        self._validate_resources(request, mock_llm)
 
         brazos: list[Brazo] = list(request.brazos)  # type: ignore[assignment]
         idioma: Idioma = request.idioma  # type: ignore[assignment]
@@ -96,7 +98,7 @@ class InferenceService:
         client = None
         rag = None
         if any(b.startswith("llm_") for b in brazos):
-            client = self._build_llm_client(mock_llm=request.mock_llm)
+            client = self._build_llm_client(mock_llm=mock_llm)
             if "llm_rag" in brazos:
                 rag = self.get_rag_index()
 
@@ -104,7 +106,7 @@ class InferenceService:
             request.nota_clinica.strip(),
             cfg=self.cfg,
             brazos=brazos,
-            mock_llm=request.mock_llm,
+            mock_llm=mock_llm,
             idioma=idioma,
             modelo_tfidf=self.modelo_tfidf,
             client=client,
