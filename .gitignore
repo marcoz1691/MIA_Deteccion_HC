@@ -240,3 +240,7 @@ s10/anonimizador/ANONIMIZADOR/historia_ejemplo_ANON.pdf
 ~$*
 ~WRL*.tmp
 .env
+
+# Reportes locales de la suite SDET
+tests/eval/last_eval_report.json
+tests/perf/last_benchmark.json

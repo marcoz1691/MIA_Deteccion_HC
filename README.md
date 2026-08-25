@@ -243,6 +243,14 @@ MIA_Deteccion_HC/
 │   ├── docs/                    # S10_Avance_Consolidado.pdf / .docx
 │   ├── evidencias/              # JSON, CSV, figuras (committeable)
 │   └── README.md
+├── tests/                       # Suite SDET (funcional, perf, eval, E2E)
+│   ├── README.md
+│   ├── smoke/smoke.py           # Fase 0
+│   ├── api/ s7/ s10/ perf/ eval/ security/ e2e/
+│   └── signoff/CHECKLIST.md
+├── pytest.ini
+├── requirements-dev.txt         # pytest, httpx, locust, playwright
+├── .github/workflows/tests.yml  # CI regresión + smoke
 └── data/
     └── citimed_odontologia.example.csv
 ```
@@ -285,5 +293,61 @@ Orden recomendado y más scripts en [`s7/README.md`](s7/README.md).
 **Modo por defecto:** mock LLM local, sin API key.
 
 Ver [`api/README.md`](api/README.md), [`frontend/README.md`](frontend/README.md) y [`demo/README.md`](demo/README.md).
+
+---
+
+## Pruebas (suite SDET)
+
+Suite de pruebas full-stack: funcional, ML/evaluación, rendimiento, estrés, seguridad PHI y E2E UI (~95 casos).
+
+| Recurso | Descripción |
+|---------|-------------|
+| [`tests/README.md`](tests/README.md) | Guía completa: fases, comandos, marcadores pytest |
+| [`tests/signoff/CHECKLIST.md`](tests/signoff/CHECKLIST.md) | Checklist sign-off producción (Fase 6) |
+| [`.github/workflows/tests.yml`](.github/workflows/tests.yml) | CI: regresión + smoke en cada PR |
+
+### Instalación
+
+```powershell
+pip install -r requirements-dev.txt
+```
+
+### Comandos rápidos
+
+```powershell
+# Fase 0 — Smoke post-deploy (requiere uvicorn en :8000)
+python tests/smoke/smoke.py
+
+# Fase 1 — Regresión funcional (pytest + qa_e2e si API activa)
+.\tests\run_phase1.ps1
+
+# Regresión solo pytest (sin servidor)
+pytest -m regression -q
+
+# Fase 3 — Evaluación ML (golden set + umbrales ROC-AUC/AUPRC)
+python tests/eval/run_eval_suite.py
+
+# Fase 4 — Rendimiento
+pytest tests/perf/benchmark_tfidf.py -m perf -q
+
+# Fase 5 — Estrés (Locust, servidor activo)
+locust -f tests/perf/locustfile.py --host=http://127.0.0.1:8000 --headless -u 20 -r 5 -t 2m
+```
+
+### Cobertura por capa
+
+| Capa | Casos | Ubicación |
+|------|-------|-----------|
+| API REST (`/health`, `/generar`) | TC-API-01..25 | `tests/api/` |
+| Pipeline ML (s7) | TC-ML-01..09 | `tests/s7/` |
+| Anonimización CITIMED (s10) | TC-S10-01..07 | `tests/s10/` |
+| Evaluación ML | TC-EVAL-01..10 | `tests/eval/` |
+| Rendimiento / estrés | TC-PERF, TC-STR | `tests/perf/` |
+| Seguridad PHI | TC-SEC-01..07 | `tests/security/` |
+| UI React / Streamlit | TC-UI-R/S | `tests/e2e/` |
+
+Los 18 casos E2E originales de [`api/qa_e2e_manual.py`](api/qa_e2e_manual.py) están formalizados en pytest (`tests/api/`). El modelo TF-IDF en tests usa un **fake model** en memoria, por lo que la regresión no depende de `salidas_ajuste/modelo_ajustado.joblib`.
+
+---
 
 Ver [`s6/BITACORA.md`](s6/BITACORA.md) para el historial completo, [`s7/docs/informe_produccion.md`](s7/docs/informe_produccion.md) para riesgos de producción, [`s8/README.md`](s8/README.md) para el borrador histórico S8 y [`s10/README.md`](s10/README.md) para la entrega consolidada S10.
