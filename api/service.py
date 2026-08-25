@@ -7,7 +7,8 @@ from s7.inferencia import Brazo, Idioma, ResultadoNota, ResultadoOracion, analiz
 from s7.llm_client import LLMClient, LLMUnavailableError
 from s7.rag_index import RAGIndex
 
-from api.schemas import GenerarRequest, GenerarResponse, OracionResponse, Top1Response
+from api.db import HistorialDB
+from api.schemas import GenerarRequest, GenerarResponse, HistorialItemResponse, OracionResponse, Top1Response
 from api.settings import resolve_mock_llm
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -29,11 +30,12 @@ def resolve_cfg_paths(cfg: dict, root: Path = ROOT) -> dict:
 class InferenceService:
     """Carga recursos compartidos y ejecuta analizar_nota()."""
 
-    def __init__(self) -> None:
+    def __init__(self, historial_db: HistorialDB | None = None) -> None:
         self.cfg = resolve_cfg_paths(cargar_config(ROOT / "s7" / "config.yaml"))
         self.model_path = Path(self.cfg["salidas"]["modelo_tfidf"])
         self.modelo_tfidf = None
         self._rag: RAGIndex | None = None
+        self.historial_db = historial_db
 
         if self.model_path.exists():
             self.modelo_tfidf = cargar_modelo_tfidf(self.model_path)
@@ -113,7 +115,43 @@ class InferenceService:
             rag=rag,
             fallback_tfidf=self.modelo_tfidf_disponible,
         )
-        return serialize_resultado(resultado, request.umbral)
+        response = serialize_resultado(resultado, request.umbral)
+
+        if request.guardar_historial and self.historial_db is not None:
+            nota = request.nota_clinica.strip()
+            alerta = bool(response.top1 and response.top1.alerta)
+            saved = self.historial_db.save_analisis(
+                nota=nota,
+                resultado=response.model_dump(mode="json"),
+                ejemplo_id=request.ejemplo_id,
+                idioma=request.idioma,
+                mock_llm=mock_llm,
+                alerta=alerta,
+            )
+            response = response.model_copy(update={"historial_id": saved["id"]})
+
+        return response
+
+    def list_historial(self, limit: int = 10) -> list[HistorialItemResponse]:
+        if self.historial_db is None:
+            return []
+        rows = self.historial_db.list_analisis(limit=limit)
+        return [_historial_item_from_row(r) for r in rows]
+
+    def delete_historial(self, entry_id: str) -> bool:
+        if self.historial_db is None:
+            return False
+        return self.historial_db.delete_analisis(entry_id)
+
+    def clear_historial(self) -> int:
+        if self.historial_db is None:
+            return 0
+        return self.historial_db.clear_analisis()
+
+    def historial_count(self) -> int:
+        if self.historial_db is None:
+            return 0
+        return self.historial_db.count()
 
 
 def serialize_oracion(res: ResultadoOracion, brazos: list[Brazo], umbral: float) -> OracionResponse:
@@ -154,4 +192,19 @@ def serialize_resultado(resultado: ResultadoNota, umbral: float) -> GenerarRespo
         modo_degradado=resultado.modo_degradado,
         brazos_efectivos=list(brazos),
         mensaje_fallback=resultado.mensaje_fallback,
+        historial_id=None,
+    )
+
+
+def _historial_item_from_row(row: dict) -> HistorialItemResponse:
+    resultado = GenerarResponse.model_validate(row["resultado"])
+    return HistorialItemResponse(
+        id=row["id"],
+        created_at=row["created_at"],
+        nota=row["nota"],
+        resultado=resultado,
+        ejemplo_id=row["ejemplo_id"],
+        idioma=row["idioma"],
+        mock_llm=row["mock_llm"],
+        alerta=row["alerta"],
     )

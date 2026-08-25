@@ -1,11 +1,14 @@
-"""Variables de entorno del backend (mock LLM, claves API)."""
+"""Variables de entorno del backend (mock LLM, claves API, SQLite)."""
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+ROOT = Path(__file__).resolve().parent.parent
 
 
 def _env_bool(name: str) -> bool | None:
@@ -30,3 +33,17 @@ def resolve_mock_llm(request_mock_llm: bool) -> tuple[bool, bool]:
     if forced is not None:
         return forced, True
     return request_mock_llm, False
+
+
+def sqlite_db_path(root: Path = ROOT) -> Path:
+    raw = os.getenv("SQLITE_PATH", "data/citimed_analisis.db").strip()
+    path = Path(raw)
+    return path if path.is_absolute() else root / path
+
+
+def historial_max_items() -> int:
+    raw = os.getenv("HISTORIAL_MAX_ITEMS", "50")
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        return 50

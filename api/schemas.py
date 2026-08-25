@@ -24,6 +24,8 @@ class GenerarRequest(BaseModel):
         min_length=1,
     )
     umbral: float = Field(0.5, ge=0.0, le=1.0, description="Umbral de alerta para localización.")
+    ejemplo_id: str = Field("propia", description="Identificador del caso demo o 'propia'.")
+    guardar_historial: bool = Field(True, description="Persistir el análisis en SQLite.")
 
 
 class OracionResponse(BaseModel):
@@ -55,6 +57,23 @@ class GenerarResponse(BaseModel):
     modo_degradado: bool
     brazos_efectivos: list[str]
     mensaje_fallback: str | None
+    historial_id: str | None = None
+
+
+class HistorialItemResponse(BaseModel):
+    id: str
+    created_at: str
+    nota: str
+    resultado: GenerarResponse
+    ejemplo_id: str
+    idioma: IdiomaLiteral
+    mock_llm: bool
+    alerta: bool
+
+
+class HistorialListResponse(BaseModel):
+    items: list[HistorialItemResponse]
+    total: int
 
 
 class HealthResponse(BaseModel):
@@ -68,3 +87,5 @@ class HealthResponse(BaseModel):
     llm_api_configurada: bool = Field(
         description="True si hay OPENAI_API_KEY o MISTRAL_API_KEY en el servidor."
     )
+    historial_sqlite: str = Field(description="Ruta absoluta de la base SQLite del historial.")
+    historial_count: int = Field(description="Número de análisis almacenados.")

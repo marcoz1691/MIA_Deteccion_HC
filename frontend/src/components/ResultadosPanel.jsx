@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 function fmt(score) {
   return score == null ? "—" : Number(score).toFixed(2);
 }
@@ -32,7 +34,27 @@ function EmptyState() {
   );
 }
 
-export default function ResultadosPanel({ resultado, error, loading }) {
+export default function ResultadosPanel({ resultado, error, loading, mockLlm = true }) {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!loading) {
+      setElapsed(0);
+      return undefined;
+    }
+    const t0 = Date.now();
+    const id = window.setInterval(() => {
+      setElapsed(Math.floor((Date.now() - t0) / 1000));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [loading]);
+
+  const loadingHint = mockLlm
+    ? "Modo mock: respuesta local en segundos."
+    : elapsed < 20
+      ? "Primera vez: puede descargar el modelo RAG (~30 s). Luego analiza con OpenAI."
+      : "LLM real (OpenAI): 30–120 s según oraciones. No cierres la pestaña.";
+
   return (
     <section className="card" aria-labelledby="result-title" aria-live="polite">
       <div className="card-head">
@@ -45,8 +67,10 @@ export default function ResultadosPanel({ resultado, error, loading }) {
         <div className="loading">
           <div className="spinner" aria-hidden="true" />
           <div>
-            <p className="loading-title">Analizando nota…</p>
-            <p className="hint">La primera vez con RAG puede tardar unos 15 segundos.</p>
+            <p className="loading-title">
+              Analizando nota…{elapsed > 0 ? ` (${elapsed}s)` : ""}
+            </p>
+            <p className="hint">{loadingHint}</p>
           </div>
         </div>
       )}
