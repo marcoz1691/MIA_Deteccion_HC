@@ -20,14 +20,18 @@ export async function analizarNota({
   nota,
   mockLlm,
   idioma = "spanish",
+  ejemploId = "propia",
   brazos = ["tfidf", "llm_zero", "llm_rag"],
   umbral = 0.5,
+  guardarHistorial = true,
 }) {
   const body = {
     nota_clinica: nota,
     idioma,
     brazos,
     umbral,
+    ejemplo_id: ejemploId,
+    guardar_historial: guardarHistorial,
   };
   if (mockLlm !== undefined) {
     body.mock_llm = mockLlm;
@@ -38,6 +42,26 @@ export async function analizarNota({
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+export async function fetchHistorial(limit = 10) {
+  const res = await fetch(`${API_BASE}/historial?limit=${limit}`);
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+export async function deleteHistorialItem(id) {
+  const res = await fetch(`${API_BASE}/historial/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+export async function clearHistorialApi() {
+  const res = await fetch(`${API_BASE}/historial`, { method: "DELETE" });
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();
 }

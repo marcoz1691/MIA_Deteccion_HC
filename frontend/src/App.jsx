@@ -1,9 +1,22 @@
 import { useEffect, useState } from "react";
 
-import { analizarNota, healthCheck } from "./api/client";
+import {
+  analizarNota,
+  clearHistorialApi,
+  deleteHistorialItem,
+  fetchHistorial,
+  healthCheck,
+} from "./api/client";
+import HistorialPanel from "./components/HistorialPanel";
 import NotaInput from "./components/NotaInput";
 import ResultadosPanel from "./components/ResultadosPanel";
 import { EJEMPLOS } from "./ejemplos";
+import { mapHistorialList } from "./historial";
+
+async function loadHistorialFromApi() {
+  const data = await fetchHistorial(10);
+  return mapHistorialList(data);
+}
 
 export default function App() {
   const [ejemploId, setEjemploId] = useState("medicacion");
@@ -14,16 +27,35 @@ export default function App() {
   const [resultado, setResultado] = useState(null);
   const [error, setError] = useState(null);
   const [health, setHealth] = useState(null);
+  const [historial, setHistorial] = useState([]);
+  const [historialActivoId, setHistorialActivoId] = useState(null);
+  const [historialError, setHistorialError] = useState(null);
 
   const isDev = import.meta.env.DEV;
 
   useEffect(() => {
     if (!isDev) return;
     healthCheck()
-      .then((data) => {
+      .then(async (data) => {
         setHealth(data);
         if (data.mock_llm_forzado) {
           setMockLlm(data.mock_llm);
+        } else if (data.llm_api_configurada) {
+          setMockLlm(false);
+        }
+        try {
+          const items = await loadHistorialFromApi();
+          setHistorial(items);
+          setHistorialError(null);
+        } catch (exc) {
+          const msg = exc.message || "No se pudo cargar el historial.";
+          if (msg.toLowerCase().includes("not found") || data.historial_count == null) {
+            setHistorialError(
+              "El backend no expone /historial. Reinicia uvicorn en la rama feature/sqlite-historial."
+            );
+          } else {
+            setHistorialError(msg);
+          }
         }
       })
       .catch(() => setHealth({ status: "offline", modelo_tfidf_disponible: false }));
@@ -35,6 +67,25 @@ export default function App() {
     setNota(ejemplo?.texto ?? "");
     setResultado(null);
     setError(null);
+    setHistorialActivoId(null);
+  }
+
+  async function refreshHistorial(activeId = null) {
+    try {
+      const items = await loadHistorialFromApi();
+      setHistorial(items);
+      setHistorialError(null);
+      if (activeId) setHistorialActivoId(activeId);
+    } catch (exc) {
+      const msg = exc.message || "No se pudo cargar el historial.";
+      if (msg.toLowerCase().includes("not found")) {
+        setHistorialError(
+          "El backend no expone /historial. Reinicia uvicorn en la rama feature/sqlite-historial."
+        );
+      } else {
+        setHistorialError(msg);
+      }
+    }
   }
 
   async function handleAnalizar() {
@@ -47,8 +98,15 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const data = await analizarNota({ nota: texto, mockLlm: isDev ? mockLlm : undefined, idioma });
+      const data = await analizarNota({
+        nota: texto,
+        mockLlm: isDev ? mockLlm : undefined,
+        idioma,
+        ejemploId,
+      });
       setResultado(data);
+      setLoading(false);
+      void refreshHistorial(data.historial_id ?? null);
     } catch (exc) {
       setResultado(null);
       setError(exc.message || "No se pudo analizar la nota.");
@@ -57,8 +115,41 @@ export default function App() {
     }
   }
 
-  // En producción el usuario ve una sola app; el estado del backend es interno (LB/K8s).
+  function handleHistorialSelect(item) {
+    setNota(item.nota);
+    setEjemploId(item.ejemploId ?? "propia");
+    setIdioma(item.idioma ?? "spanish");
+    if (isDev) setMockLlm(Boolean(item.mockLlm));
+    setResultado(item.resultado);
+    setError(null);
+    setHistorialActivoId(item.id);
+  }
+
+  async function handleHistorialRemove(id) {
+    try {
+      await deleteHistorialItem(id);
+      if (historialActivoId === id) {
+        setHistorialActivoId(null);
+      }
+      await refreshHistorial();
+    } catch (exc) {
+      setHistorialError(exc.message || "No se pudo eliminar el análisis.");
+    }
+  }
+
+  async function handleHistorialClear() {
+    try {
+      await clearHistorialApi();
+      setHistorial([]);
+      setHistorialActivoId(null);
+      setHistorialError(null);
+    } catch (exc) {
+      setHistorialError(exc.message || "No se pudo vaciar el historial.");
+    }
+  }
+
   const backendOk = isDev ? health?.status === "ok" : true;
+  const healthReady = !isDev || health !== null;
 
   return (
     <div className="app">
@@ -76,8 +167,10 @@ export default function App() {
             <div className={`status ${backendOk ? "ok" : "down"}`}>
               <span className="dot" />
               {backendOk
-                ? `Backend listo${health.modelo_tfidf_disponible ? " · TF-IDF" : " · sin TF-IDF"}`
-                : "Backend no disponible"}
+                ? `Backend listo${health.modelo_tfidf_disponible ? " · TF-IDF" : " · sin TF-IDF"}${health.llm_api_configurada ? " · OpenAI" : ""}${health.historial_count != null ? ` · ${health.historial_count} hist.` : ""}`
+                : healthReady
+                  ? "Backend no disponible"
+                  : "Conectando…"}
             </div>
           )}
         </div>
@@ -105,13 +198,27 @@ export default function App() {
             showMockOption={isDev}
             mockLlmForced={Boolean(health?.mock_llm_forzado)}
             loading={loading}
-            canAnalyze={Boolean(nota.trim())}
-            backendOk={backendOk}
+            canAnalyze={Boolean(nota.trim()) && healthReady}
+            backendOk={backendOk && healthReady}
             showBackendHint={isDev}
             onAnalizar={handleAnalizar}
           />
-          <ResultadosPanel resultado={resultado} error={error} loading={loading} />
+          <ResultadosPanel
+            resultado={resultado}
+            error={error}
+            loading={loading}
+            mockLlm={mockLlm}
+          />
         </main>
+
+        <HistorialPanel
+          items={historial}
+          activeId={historialActivoId}
+          error={historialError}
+          onSelect={handleHistorialSelect}
+          onRemove={handleHistorialRemove}
+          onClear={handleHistorialClear}
+        />
       </div>
     </div>
   );
