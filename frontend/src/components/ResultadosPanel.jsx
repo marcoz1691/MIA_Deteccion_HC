@@ -18,16 +18,16 @@ function ScoreBar({ value, umbral = 0.5 }) {
 function EmptyState() {
   return (
     <div className="empty-state">
-      <p>El sistema localiza la oración sospechosa. No es un veredicto clínico.</p>
+      <p>El sistema localiza la frase sospechosa. No es un veredicto médico.</p>
       <ol className="empty-steps">
         <li>
-          <b>01</b> Elige un ejemplo o pega una nota clínica.
+          <b>01</b> Elige un ejemplo o pega una nota médica.
         </li>
         <li>
           <b>02</b> Pulsa Analizar nota para ejecutar TF-IDF, LLM y RAG.
         </li>
         <li>
-          <b>03</b> Revisa la oración marcada. Un médico debe validar el hallazgo.
+          <b>03</b> Revisa la frase marcada. Un médico debe validar el hallazgo.
         </li>
       </ol>
     </div>
@@ -53,18 +53,23 @@ export default function ResultadosPanel({ resultado, error, loading, mockLlm = t
     ? "Modo mock: respuesta local en segundos."
     : elapsed < 20
       ? "Primera vez: puede descargar el modelo RAG (~30 s). Luego analiza con OpenAI."
-      : "LLM real (OpenAI): 30–120 s según oraciones. No cierres la pestaña.";
+      : "LLM real (OpenAI): 30–120 s según frases. No cierres la pestaña.";
 
   return (
-    <section className="card" aria-labelledby="result-title" aria-live="polite">
+    <section
+      className="card"
+      aria-labelledby="result-title"
+      aria-live="polite"
+      aria-busy={loading}
+    >
       <div className="card-head">
         <p className="eyebrow">Hallazgo</p>
         <h2 id="result-title">Revisión asistida</h2>
-        <p className="hint">Se señala la oración a revisar. La decisión sigue siendo clínica.</p>
+        <p className="hint">Se señala la frase a revisar. La decisión sigue siendo médica.</p>
       </div>
 
       {loading && (
-        <div className="loading">
+        <div className="loading" role="status">
           <div className="spinner" aria-hidden="true" />
           <div>
             <p className="loading-title">
@@ -97,7 +102,7 @@ function ResultadoBody({ resultado }) {
     <>
       {truncado && (
         <div className="banner warn">
-          La nota tiene {n_total} oraciones; se analizaron las primeras {oraciones.length}.
+          La nota tiene {n_total} frases; se analizaron las primeras {oraciones.length}.
         </div>
       )}
       {modo_degradado && (
@@ -105,12 +110,12 @@ function ResultadoBody({ resultado }) {
       )}
 
       {top1 ? (
-        <div className={`verdict ${alerta ? "alert" : "ok"}`}>
+        <div className={`banner verdict ${alerta ? "alert" : "ok"}`}>
           <p className="verdict-kicker">{alerta ? "Requiere revisión" : "Sin alerta clara"}</p>
           <p className="verdict-title">
             {alerta
-              ? `Revisar oración ${top1.sid + 1}`
-              : "Ninguna oración supera el umbral de 0.50"}
+              ? `Revisar frase ${top1.sid + 1}`
+              : "Ninguna frase supera el umbral de 0.50"}
           </p>
           <ScoreBar value={top1.score_localizacion} />
           <p className="hint">
@@ -118,13 +123,13 @@ function ResultadoBody({ resultado }) {
           </p>
         </div>
       ) : (
-        <div className="banner warn">No se detectaron oraciones. Escribe frases separadas por puntos.</div>
+        <div className="banner warn">No se detectaron frases. Escribe enunciados separados por puntos.</div>
       )}
 
       {top1 && (
         <article className={`sentence ${alerta ? "alert" : ""}`}>
           <header>
-            <span>Oración {top1.sid + 1}</span>
+            <span>Frase {top1.sid + 1}</span>
             <span className={`pill ${alerta ? "danger" : "ok"}`}>
               {alerta ? "Sospechosa" : "Bajo umbral"}
             </span>
@@ -135,7 +140,7 @@ function ResultadoBody({ resultado }) {
 
       <div className="metrics">
         <div>
-          <span>Oraciones</span>
+          <span>Frases</span>
           <strong>{oraciones.length}</strong>
         </div>
         <div>
@@ -148,13 +153,13 @@ function ResultadoBody({ resultado }) {
         </div>
       </div>
 
-      <h3 className="table-title">Detalle por oración</h3>
+      <h3 className="table-title">Detalle por frase</h3>
       <div className="table-wrap">
         <table>
           <thead>
             <tr>
               <th>#</th>
-              <th>Oración</th>
+              <th>Frase</th>
               <th>TF-IDF</th>
               <th>LLM</th>
               <th>RAG</th>

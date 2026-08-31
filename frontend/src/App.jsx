@@ -7,6 +7,7 @@ import {
   fetchHistorial,
   healthCheck,
 } from "./api/client";
+import HeaderBrand from "./components/HeaderBrand";
 import HistorialPanel from "./components/HistorialPanel";
 import NotaInput from "./components/NotaInput";
 import ResultadosPanel from "./components/ResultadosPanel";
@@ -30,6 +31,7 @@ export default function App() {
   const [historial, setHistorial] = useState([]);
   const [historialActivoId, setHistorialActivoId] = useState(null);
   const [historialError, setHistorialError] = useState(null);
+  const [historialRailOpen, setHistorialRailOpen] = useState(false);
 
   const isDev = import.meta.env.DEV;
 
@@ -153,34 +155,32 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="topbar">
-        <div className="brand">
-          <span className="mark" aria-hidden="true" />
-          <div>
-            <p className="brand-kicker">MIA · CITIMED</p>
-            <h1>Detección de inconsistencias</h1>
-          </div>
-        </div>
-        <div className="topbar-meta">
-          <p className="lede">Análisis por oración · TF-IDF · LLM · RAG</p>
-          {isDev && (
-            <div className={`status ${backendOk ? "ok" : "down"}`}>
-              <span className="dot" />
-              {backendOk
-                ? `Backend listo${health.modelo_tfidf_disponible ? " · TF-IDF" : " · sin TF-IDF"}${health.llm_api_configurada ? " · OpenAI" : ""}${health.historial_count != null ? ` · ${health.historial_count} hist.` : ""}`
-                : healthReady
-                  ? "Backend no disponible"
-                  : "Conectando…"}
-            </div>
-          )}
-        </div>
-      </header>
+      <HeaderBrand
+        isDev={isDev}
+        backendOk={backendOk}
+        healthReady={healthReady}
+        health={health}
+      />
 
-      <div className="shell">
-        <p className="disclaimer">
-          Prototipo de investigación. No sustituye el criterio clínico ni debe usarse para
-          decisiones terapéuticas.
-        </p>
+      <div className="shell shell-workspace">
+        <button
+          type="button"
+          className="ghost-btn historial-toggle"
+          aria-controls="historial-rail"
+          aria-expanded={historialRailOpen}
+          onClick={() => setHistorialRailOpen((open) => !open)}
+        >
+          {historialRailOpen ? "Ocultar historial" : "Mostrar historial"}
+        </button>
+        <HistorialPanel
+          className={`historial-rail ${historialRailOpen ? "is-open" : ""}`}
+          items={historial}
+          activeId={historialActivoId}
+          error={historialError}
+          onSelect={handleHistorialSelect}
+          onRemove={handleHistorialRemove}
+          onClear={handleHistorialClear}
+        />
 
         <main className="workspace">
           <NotaInput
@@ -210,15 +210,6 @@ export default function App() {
             mockLlm={mockLlm}
           />
         </main>
-
-        <HistorialPanel
-          items={historial}
-          activeId={historialActivoId}
-          error={historialError}
-          onSelect={handleHistorialSelect}
-          onRemove={handleHistorialRemove}
-          onClear={handleHistorialClear}
-        />
       </div>
     </div>
   );

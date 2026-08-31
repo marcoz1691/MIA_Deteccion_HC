@@ -1,0 +1,56 @@
+# Configuración de herramientas de desarrollo del proyecto MIA_Deteccion_HC.
+#
+# IMPORTANTE: pytest da precedencia a `pytest.ini` sobre `pyproject.toml`.
+# Para que esta configuración sea la efectiva hay que eliminar `pytest.ini`
+# de la raíz del repositorio; mientras exista, invóquese de forma explícita:
+#   python -m pytest -c pyproject.toml
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+
+# La raíz del repositorio debe estar en sys.path para que las pruebas puedan
+# importar los paquetes api/, s7/ y s10/ sin instalación previa.
+pythonpath = ["."]
+
+# Un único `python -m pytest` desde la raíz recoge todas las suites del
+# proyecto. `s11/anonimizador_ocr/pruebas` se recoge por ruta explícita: sus
+# pruebas insertan su propio directorio padre en sys.path, por lo que no
+# dependen de `pythonpath`.
+testpaths = [
+    "tests",
+    "api",
+    "s7/test_fallback.py",
+    "s10/test_citimed_pipeline.py",
+    "s11/tests",
+    "s11/anonimizador_ocr/pruebas",
+]
+
+# `anonimizador/` contiene una copia histórica del paquete OCR con nombres de
+# módulo duplicados; recogerla provocaría colisiones de importación.
+norecursedirs = [
+    ".git",
+    ".venv",
+    ".pytest_cache",
+    ".benchmarks",
+    "__pycache__",
+    "node_modules",
+    "anonimizador",
+    "medec_try",
+    "data",
+    "docs",
+    "salidas*",
+]
+
+markers = [
+    "smoke: pruebas smoke post-deploy (Fase 0)",
+    "regression: regresión funcional (Fase 1)",
+    "integration: integración full-stack (Fase 2)",
+    "eval: evaluación ML (Fase 3)",
+    "perf: rendimiento (Fase 4)",
+    "stress: estrés y resiliencia (Fase 5)",
+    "security: seguridad y cumplimiento",
+    "e2e: end-to-end UI",
+    "requiere_ocr: requiere el binario de Tesseract instalado; se omite automáticamente si no está disponible",
+]
+
+filterwarnings = ["ignore::DeprecationWarning"]

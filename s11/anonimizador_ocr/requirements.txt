@@ -1,0 +1,10 @@
+pymupdf>=1.24
+pytesseract>=0.3.10
+opencv-python-headless>=4.8
+numpy>=1.24
+pillow>=10.0
+spacy>=3.8,<3.9
+# modelo spaCy (instalar aparte, ver README):
+# python -m pip install https://github.com/explosion/spacy-models/releases/download/es_core_news_md-3.8.0/es_core_news_md-3.8.0-py3-none-any.whl
+# opcional, mejor con manuscrito legible (pesado, requiere torch):
+# easyocr>=1.7

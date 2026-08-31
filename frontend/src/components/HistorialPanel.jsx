@@ -1,8 +1,20 @@
 import { formatHistorialFecha, previewNota } from "../historial";
 
-export default function HistorialPanel({ items, activeId, error, onSelect, onRemove, onClear }) {
+export default function HistorialPanel({
+  className = "",
+  items,
+  activeId,
+  error,
+  onSelect,
+  onRemove,
+  onClear,
+}) {
   return (
-    <section className="card historial" aria-labelledby="historial-title">
+    <section
+      id="historial-rail"
+      className={`card historial ${className}`}
+      aria-labelledby="historial-title"
+    >
       <div className="card-head historial-head">
         <div>
           <p className="eyebrow">Persistencia</p>

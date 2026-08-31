@@ -15,4 +15,6 @@ streamlit>=1.32
 # API FastAPI
 fastapi>=0.110
 uvicorn[standard]>=0.27
+# Pruebas: pytest se declara en requirements-dev.txt (no ensucia el runtime).
+#   pip install -r requirements-dev.txt
 # MLflow es opcional (conflicta con numpy>=2). Ver requirements-optional.txt

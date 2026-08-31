@@ -1,0 +1,56 @@
+{
+  "fuente_tachados": "s11/evidencias/anonimizacion_agregados.json",
+  "fuente_escapados": "OCR sobre PDF ya tachado (--buscable); detector sin NER",
+  "nota": "presentes es cota inferior (tachados + residuos de capa de texto). No sustituye la revision visual de las 20 paginas originales por dos revisores. No contiene texto clinico.",
+  "por_categoria": {
+    "NOMBRE": {
+      "presentes": 128,
+      "tachados": 115,
+      "escapados": 13
+    },
+    "CEDULA": {
+      "presentes": 10,
+      "tachados": 10,
+      "escapados": 0
+    },
+    "HC": {
+      "presentes": 12,
+      "tachados": 12,
+      "escapados": 0
+    },
+    "TELEFONO": {
+      "presentes": 0,
+      "tachados": 0,
+      "escapados": 0
+    },
+    "EMAIL": {
+      "presentes": 0,
+      "tachados": 0,
+      "escapados": 0
+    },
+    "FECHA": {
+      "presentes": 0,
+      "tachados": 0,
+      "escapados": 0
+    },
+    "DIRECCION": {
+      "presentes": 1,
+      "tachados": 1,
+      "escapados": 0
+    }
+  },
+  "recall_capa_texto": {
+    "NOMBRE": 0.8984375,
+    "CEDULA": 1.0,
+    "HC": 1.0,
+    "TELEFONO": null,
+    "EMAIL": null,
+    "FECHA": null,
+    "DIRECCION": 1.0
+  },
+  "criterio_bloqueo_nombre_cedula_hc": false,
+  "paginas_manuscrito": [
+    10
+  ],
+  "n_filas": 140
+}

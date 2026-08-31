@@ -1,0 +1,40 @@
+{
+  "modo": "cross_domain",
+  "status": "pending_data",
+  "metricas": {
+    "accuracy": 0.92,
+    "precision": 0.125,
+    "recall": 0.5,
+    "f1": 0.2,
+    "roc_auc": 0.7347,
+    "auprc": 0.2689,
+    "roc_auc_ci95": [
+      0.7411,
+      0.4082,
+      1.0
+    ],
+    "auprc_ci95": [
+      0.3642,
+      0.0175,
+      1.0
+    ],
+    "f1_ci95": [
+      0.2153,
+      0.0,
+      0.5714
+    ],
+    "matriz_confusion": [
+      [
+        91,
+        7
+      ],
+      [
+        1,
+        1
+      ]
+    ]
+  },
+  "n_oraciones": 100,
+  "idioma": "spanish",
+  "entrenamiento": "MEDEC_train"
+}

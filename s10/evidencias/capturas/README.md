@@ -11,4 +11,4 @@
 | `lime_caso_tp.png` | LIME caso verdadero positivo |
 | `curvas_tfidf.png` / `comparacion_brazos.png` | Figuras S6/S7 |
 
-Regenerar: `python s10/capture_demo.py`
+Regenerar: `python s11/capture_prototipo.py` (el wrapper `s10/capture_demo.py` redirige ahí).
