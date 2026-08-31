@@ -20,10 +20,8 @@ if str(ROOT) not in sys.path:
 from s10.generate_informe import (  # noqa: E402
     _find_paragraph,
     _fmt,
-    _insert_paragraphs_after,
     _insert_picture_after_simple,
     _replace_paragraph_text,
-    export_pdf as _export_pdf_s10,
 )
 
 S10_DOCX = ROOT / "s10" / "docs" / "S10_Avance_Consolidado.docx"
@@ -45,6 +43,171 @@ def _load(path: Path) -> dict:
 
 def _fmt_opt(x, nd=3) -> str:
     return _fmt(float(x), nd) if x is not None else "—"
+
+
+def _aplicar_fuente(run, name: str = "Arial", size_pt: float = 10) -> None:
+    from docx.oxml.ns import qn
+    from docx.shared import Pt
+
+    run.font.name = name
+    run.font.size = Pt(size_pt)
+    rpr = run._element.get_or_add_rPr()
+    rfonts = rpr.get_or_add_rFonts()
+    rfonts.set(qn("w:ascii"), name)
+    rfonts.set(qn("w:hAnsi"), name)
+    rfonts.set(qn("w:cs"), name)
+    rfonts.set(qn("w:eastAsia"), name)
+
+
+def _justificar_cuerpo(para) -> None:
+    from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
+    from docx.shared import Pt
+
+    para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    fmt = para.paragraph_format
+    fmt.first_line_indent = Pt(0)
+    fmt.space_before = Pt(0)
+    fmt.space_after = Pt(8)
+    fmt.line_spacing = 1.5
+    fmt.line_spacing_rule = WD_LINE_SPACING.MULTIPLE
+    for run in para.runs:
+        _aplicar_fuente(run, size_pt=10)
+
+
+def _formatear_titulo(para) -> None:
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.shared import Pt
+
+    para.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    fmt = para.paragraph_format
+    fmt.first_line_indent = Pt(0)
+    fmt.space_before = Pt(12)
+    fmt.space_after = Pt(6)
+    fmt.line_spacing = 1.5
+    for run in para.runs:
+        run.bold = True
+        _aplicar_fuente(run, size_pt=10)
+
+
+def _insertar_bloques(doc, anchor_contains: str, blocks: list[tuple[str, str]]):
+    """Inserta bloques S11 con cuerpo justificado y títulos alineados a la izquierda."""
+    from docx.oxml import OxmlElement
+    from docx.text.paragraph import Paragraph
+
+    anchor = _find_paragraph(doc, anchor_contains)
+    if anchor is None:
+        print(f"[warn] Ancla no encontrada: {anchor_contains[:50]}")
+        return None
+    prev = anchor._element
+    last = anchor
+    for style_name, text in blocks:
+        new_p = OxmlElement("w:p")
+        prev.addnext(new_p)
+        para = Paragraph(new_p, anchor._parent)
+        if style_name:
+            try:
+                para.style = style_name
+            except Exception:
+                pass
+        para.add_run(text)
+        if style_name and str(style_name).lower().startswith("heading"):
+            _formatear_titulo(para)
+        else:
+            _justificar_cuerpo(para)
+        prev = new_p
+        last = para
+    return last
+
+
+def _insertar_tabla_trazabilidad(doc) -> None:
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    from docx.shared import Pt
+    from docx.text.paragraph import Paragraph
+
+    ancla = _find_paragraph(doc, "7.2. Trazabilidad S10")
+    if ancla is None:
+        return
+    filas = [
+        ["Observación S10", "Acción S11", "Evidencia", "Estado"],
+        [
+            "Declarar pytest en requirements",
+            "requirements-dev.txt y suite unificada",
+            "s11/evidencias/reporte_pytest.txt",
+            "Cerrado",
+        ],
+        [
+            "Evaluación LLM en mock",
+            "eval_tripartita con gpt-4o-mini (n=400)",
+            "s11/evidencias/metricas_llm_real.json",
+            "Cerrado",
+        ],
+        [
+            "Corpus CITIMED con aval ético",
+            "Anonimizador OCR, PDF buscable, anotación piloto y anexo ético",
+            "anonimizacion_agregados.json; reporte_anotacion.json; anexo_etico.md",
+            "Avance piloto (n < 500)",
+        ],
+        [
+            "PDF breve y capturas faltantes",
+            "Figuras embebidas y capturas del frontend rediseñado",
+            "s11/evidencias/capturas/",
+            "Cerrado",
+        ],
+        [
+            "capture_demo.py referenciado pero ausente",
+            "s11/capture_prototipo.py y wrapper de compatibilidad",
+            "s10/capture_demo.py",
+            "Cerrado",
+        ],
+    ]
+    from docx.shared import Cm
+
+    tbl = doc.add_table(rows=len(filas), cols=4)
+    try:
+        tbl.style = "Normal Table"
+    except KeyError:
+        pass
+    tbl.autofit = False
+    tbl_el = tbl._tbl
+    tbl_pr = tbl_el.tblPr
+    for child in list(tbl_pr):
+        if child.tag == qn("w:tblBorders"):
+            tbl_pr.remove(child)
+    borders = OxmlElement("w:tblBorders")
+    for edge in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        el = OxmlElement(f"w:{edge}")
+        el.set(qn("w:val"), "single")
+        el.set(qn("w:sz"), "4")
+        el.set(qn("w:space"), "0")
+        el.set(qn("w:color"), "666666")
+        borders.append(el)
+    tbl_pr.append(borders)
+    anchos = (Cm(3.6), Cm(4.4), Cm(5.6), Cm(2.4))
+    for i, fila in enumerate(filas):
+        for j, val in enumerate(fila):
+            cell = tbl.rows[i].cells[j]
+            cell.text = val
+            cell.width = anchos[j]
+            for p in cell.paragraphs:
+                p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                p.paragraph_format.first_line_indent = Pt(0)
+                p.paragraph_format.space_after = Pt(2)
+                p.paragraph_format.line_spacing = 1.15
+                for run in p.runs:
+                    run.bold = i == 0
+                    _aplicar_fuente(run, size_pt=9)
+    intro = OxmlElement("w:p")
+    ancla._element.addnext(intro)
+    para = Paragraph(intro, ancla._parent)
+    para.add_run(
+        "La tabla siguiente replica el formato de trazabilidad que el profesor valoró en S7, "
+        "ahora aplicado a las observaciones de S10. Cada fila declara la deuda, la acción "
+        "ejecutada, la evidencia reproducible y el estado."
+    )
+    _justificar_cuerpo(para)
+    intro.addnext(tbl._tbl)
 
 
 def load_s11() -> dict:
@@ -86,10 +249,14 @@ def _bloques_s11(m: dict) -> list[tuple[str, str]]:
             "El archivo requirements-dev.txt declara pytest>=8.0 y pytest-cov; requirements.txt "
             "remite a ese archivo para no ensuciar el runtime. Un solo comando "
             "`python -m pytest` recoge api/, s7/test_fallback.py, s10/test_citimed_pipeline.py, "
-            "s11/tests y s11/anonimizador_ocr/pruebas. Las pruebas que invocan Tesseract se "
-            "marcan con @pytest.mark.requiere_ocr y se omiten si el binario no está instalado, "
-            "de modo que la suite no falla en la máquina de un evaluador. El frontend se verifica "
-            "con `npm test` (node --test). Evidencia: s11/evidencias/reporte_pytest.txt.",
+            "s11/tests y s11/anonimizador_ocr/pruebas.",
+        ),
+        (
+            "Normal",
+            "Las pruebas que invocan Tesseract se marcan con @pytest.mark.requiere_ocr y se "
+            "omiten si el binario no está instalado, de modo que la suite no falla en la "
+            "máquina de un evaluador. El frontend se verifica con `npm test` (node --test). "
+            "Evidencia: s11/evidencias/reporte_pytest.txt.",
         ),
         ("Heading 2", "3.6. Anonimización OCR de historias reales"),
         (
@@ -98,11 +265,15 @@ def _bloques_s11(m: dict) -> list[tuple[str, str]]:
             "reconoce con Tesseract, detecta identificadores ecuatorianos y tacha a nivel de píxel. "
             "Cuatro capas: (1) reglas con dígito verificador de cédula; (2) contexto + NER spaCy; "
             "(3) tachado junto a etiquetas guiado por máscara de tinta (manuscrito); (4) zonas fijas "
-            "por plantilla JSON. Corrida hc0001: "
-            f"{agg.get('n_paginas', 20)} páginas, {agg.get('n_hallazgos', 127)} hallazgos, "
-            f"{agg.get('n_cajas_tachadas', 87)} cajas, {agg.get('n_paginas_a_revisar', 1)} página "
-            f"a revisión (confianza OCR 40,2 %). Procesamiento {agg.get('segundos_procesamiento', 77.5)} s, "
-            "100 % local. Agregados sin texto: s11/evidencias/anonimizacion_agregados.json.",
+            "por plantilla JSON.",
+        ),
+        (
+            "Normal",
+            f"Corrida hc0001: {agg.get('n_paginas', 20)} páginas, {agg.get('n_hallazgos', 127)} "
+            f"hallazgos, {agg.get('n_cajas_tachadas', 87)} cajas, "
+            f"{agg.get('n_paginas_a_revisar', 1)} página a revisión (confianza OCR 40,2 %). "
+            f"Procesamiento {agg.get('segundos_procesamiento', 77.5)} s, 100 % local. "
+            "Agregados sin texto: s11/evidencias/anonimizacion_agregados.json.",
         ),
         ("Heading 2", "3.7. Verificación humana y recall de de-identificación"),
         (
@@ -111,13 +282,17 @@ def _bloques_s11(m: dict) -> list[tuple[str, str]]:
             "S11 consolida una primera pasada sobre la capa de texto del PDF ya tachado "
             "(--buscable) más los conteos del pipeline. Resultado (cota inferior de presentes = "
             "tachados + residuos de capa de texto): recall CEDULA = 1,000, HC = 1,000, "
-            f"DIRECCION = 1,000, NOMBRE = {rec_txt('NOMBRE')}. El criterio de bloqueo (100 % en "
-            "NOMBRE, CÉDULA y HC) no se cumple aún en NOMBRE: el tamizado halló 13 residuos de "
-            "categoría NOMBRE en 11 oraciones, que se omitieron del corpus (ciclo de corrección). "
-            "CÉDULA y HC sí cumplen el 100 % en esta capa. La página 10 se reporta aparte "
-            "(manuscrito, confianza 40,2 %). La revisión visual dual de las 20 páginas originales "
-            "sigue siendo el protocolo (s11/docs/protocolo_verificacion_humana.md); este informe "
-            "no publica texto ni imágenes de revisión. Registro: s11/evidencias/verificacion_humana.csv.",
+            f"DIRECCION = 1,000, NOMBRE = {rec_txt('NOMBRE')}.",
+        ),
+        (
+            "Normal",
+            "El criterio de bloqueo (100 % en NOMBRE, CÉDULA y HC) no se cumple aún en NOMBRE: "
+            "el tamizado halló 13 residuos de categoría NOMBRE en 11 oraciones, que se omitieron "
+            "del corpus (ciclo de corrección). CÉDULA y HC sí cumplen el 100 % en esta capa. "
+            "La página 10 se reporta aparte (manuscrito, confianza 40,2 %). La revisión visual "
+            "dual de las 20 páginas originales sigue siendo el protocolo "
+            "(s11/docs/protocolo_verificacion_humana.md); este informe no publica texto ni "
+            "imágenes de revisión. Registro: s11/evidencias/verificacion_humana.csv.",
         ),
         ("Heading 2", "3.8. Corpus CITIMED anotado (muestra piloto)"),
         (
@@ -127,9 +302,12 @@ def _bloques_s11(m: dict) -> list[tuple[str, str]]:
             f"oraciones extraídas de {ext.get('paginas', 20)} páginas, más "
             f"{anot.get('n_oraciones_plantilla_sintetica', 4)} oraciones de la plantilla odontológica "
             f"etiquetada. Total de evaluación: {anot.get('n_oraciones_eval', '—')} oraciones, "
-            f"{anot.get('n_positivas', 0)} positivas (prevalencia {anot.get('prevalencia', 0)}). "
-            f"Doble ciego sobre {((anot.get('doble_ciego') or {}).get('n_compartidas', 0))} oraciones: "
-            f"kappa de Cohen = {((anot.get('doble_ciego') or {}).get('kappa_cohen', '—'))}. "
+            f"{anot.get('n_positivas', 0)} positivas (prevalencia {anot.get('prevalencia', 0)}).",
+        ),
+        (
+            "Normal",
+            f"Doble ciego sobre {((anot.get('doble_ciego') or {}).get('n_compartidas', 0))} "
+            f"oraciones: kappa de Cohen = {((anot.get('doble_ciego') or {}).get('kappa_cohen', '—'))}. "
             f"Eval cross-domain MEDEC→CITIMED: ROC-AUC {_fmt_opt(ev.get('roc_auc'))}, "
             f"AUPRC {_fmt_opt(ev.get('auprc'))}. Es una muestra piloto (por debajo de 500–1000 "
             "oraciones sugeridas en S7), declarada como tal. El CSV no se versiona; agregados en "
@@ -141,8 +319,11 @@ def _bloques_s11(m: dict) -> list[tuple[str, str]]:
             "S10 reportó los brazos LLM en modo mock (ROC-AUC ≈ 0,50). S11 ejecutó "
             f"eval_tripartita sobre {llm.get('n_oraciones', 400)} oraciones del test MEDEC con "
             f"{llm.get('modelo_llm', 'gpt-4o-mini')} (temperature=0, mock=false). MEDEC es público; "
-            "CITIMED sigue reservado a Ollama on-premise. Resultados: TF-IDF "
-            f"ROC-AUC {_fmt_opt((b.get('tfidf') or {}).get('roc_auc'))}, AUPRC "
+            "CITIMED sigue reservado a Ollama on-premise.",
+        ),
+        (
+            "Normal",
+            f"Resultados: TF-IDF ROC-AUC {_fmt_opt((b.get('tfidf') or {}).get('roc_auc'))}, AUPRC "
             f"{_fmt_opt((b.get('tfidf') or {}).get('auprc'))}; LLM zero-shot "
             f"{_fmt_opt((b.get('llm_zero') or {}).get('roc_auc'))} / "
             f"{_fmt_opt((b.get('llm_zero') or {}).get('auprc'))} "
@@ -152,7 +333,10 @@ def _bloques_s11(m: dict) -> list[tuple[str, str]]:
             f"{_fmt_opt((b.get('llm_rag') or {}).get('auprc'))} "
             f"(USD {_fmt_opt((b.get('llm_rag') or {}).get('costo_usd_por_1000_oraciones'), 4)} / 1000). "
             f"Mock vs real (zero-shot): {_fmt_opt((cmp_.get('llm_zero') or {}).get('roc_auc_mock'))} → "
-            f"{_fmt_opt((cmp_.get('llm_zero') or {}).get('roc_auc_real'))}. "
+            f"{_fmt_opt((cmp_.get('llm_zero') or {}).get('roc_auc_real'))}.",
+        ),
+        (
+            "Normal",
             "El LLM real no supera a TF-IDF; la ventaja léxica deja de atribuirse al mock. "
             "McNemar TF-IDF vs zero-shot p = "
             f"{_fmt_opt(((llm.get('mcnemar') or {}).get('tfidf_vs_llm_zero') or {}).get('p_value'))}. "
@@ -164,7 +348,10 @@ def _bloques_s11(m: dict) -> list[tuple[str, str]]:
             "Normal",
             "Entre S10 y S11 el prototipo pasó de demostración efímera a aplicación con estado. "
             "api/db.py persiste análisis en SQLite (UUID, marca UTC, resultado JSON, tope "
-            "HISTORIAL_MAX_ITEMS=50). Rutas GET/DELETE /historial y /health ampliado. "
+            "HISTORIAL_MAX_ITEMS=50). Rutas GET/DELETE /historial y /health ampliado.",
+        ),
+        (
+            "Normal",
             "La interfaz React es un espacio de tres zonas (historial, nota, hallazgo) con "
             "disclaimer fijo, contraste verificado y prefers-reduced-motion. 14 pruebas de "
             "frontend en verde. Capturas: s11/evidencias/capturas/prototipo_*.png. "
@@ -177,22 +364,15 @@ def _bloques_s11(m: dict) -> list[tuple[str, str]]:
             "no sale del equipo: de-identificación local, Ollama on-premise, originales y "
             "PNG de revisión fuera de git. Categorías redactadas alineadas con Safe Harbor "
             "HIPAA adaptadas a Ecuador (cédula con dígito verificador, RUC, HC, teléfono, "
-            "correo, fecha de nacimiento, dirección, edad ≥ 90). Autorización institucional "
-            "de CITIMED para uso académico confirmada por el grupo; el documento de respaldo "
-            "se conserva offline. Anexo: s11/docs/anexo_etico.md.",
+            "correo, fecha de nacimiento, dirección, edad ≥ 90).",
         ),
-        ("Heading 2", "7.2. Trazabilidad S10 → S11"),
         (
             "Normal",
-            "Observación S10 · Acción S11 · Evidencia · Estado. "
-            "(1) Declarar pytest · requirements-dev.txt + suite unificada · reporte_pytest.txt · Cerrado. "
-            "(2) Evaluación LLM en mock · eval_tripartita con gpt-4o-mini, n=400 · metricas_llm_real.json · Cerrado. "
-            "(3) Corpus CITIMED con aval ético · anonimizador OCR + PDF buscable + anotación piloto + anexo ético · "
-            "anonimizacion_agregados.json, reporte_anotacion.json, anexo_etico.md · Avance piloto (n < 500). "
-            "(4) PDF breve / capturas faltantes · figuras embebidas y captura del frontend rediseñado · "
-            "s11/evidencias/capturas/ · Cerrado. "
-            "(5) capture_demo.py referenciado pero ausente · capture_prototipo.py + wrapper · Cerrado.",
+            "La autorización institucional de CITIMED para uso académico está confirmada por "
+            "el grupo; el documento de respaldo se conserva offline. "
+            "Anexo: s11/docs/anexo_etico.md.",
         ),
+        ("Heading 2", "7.2. Trazabilidad S10 → S11"),
         ("Heading 2", "7. Pitch (versión escrita)"),
         (
             "Normal",
@@ -278,13 +458,15 @@ def update_s11(m: dict) -> None:
             "hallazgos) y el corpus piloto se anotó tras omitir residuos de capa de texto. "
             f"Repositorio: {REPO_URL}.",
         )
+        _justificar_cuerpo(resumen)
 
     ancla = "Trabajo futuro (post-S10)"
     if _find_paragraph(doc, ancla) is None:
         ancla = "Trabajo restante para la versión final"
     if _find_paragraph(doc, ancla) is None:
         ancla = "Hasta la semana 10"
-    _insert_paragraphs_after(doc, ancla, _bloques_s11(m))
+    _insertar_bloques(doc, ancla, _bloques_s11(m))
+    _insertar_tabla_trazabilidad(doc)
 
     figuras = [
         ("4.4. Evaluación con LLM real", CAP / "tripartita_mock_vs_real.png",
@@ -309,7 +491,21 @@ def update_s11(m: dict) -> None:
 
 
 def export_pdf() -> None:
-    # Reutiliza la lógica de S10 apuntando a las rutas S11.
+    # 1) win32com (Windows, sin comtypes)
+    try:
+        import win32com.client  # type: ignore
+
+        word = win32com.client.Dispatch("Word.Application")
+        word.Visible = False
+        doc = word.Documents.Open(str(OUT_DOCX.resolve()))
+        doc.SaveAs(str(OUT_PDF.resolve()), FileFormat=17)
+        doc.Close(False)
+        word.Quit()
+        print(f"[ok] PDF (MS Word) -> {OUT_PDF}")
+        return
+    except Exception as e:
+        print(f"[info] win32com no disponible: {e}")
+
     import s10.generate_informe as g
 
     prev_docx, prev_pdf, prev_docs = g.OUT_DOCX, g.OUT_PDF, g.DOCS
