@@ -1,0 +1,43 @@
+{
+  "generado": "2026-08-31T05:06:57.015921+00:00",
+  "pdf_origen": "hc0001_anon.pdf",
+  "nota_id": "citimed_hc0001",
+  "paginas": 20,
+  "oraciones_totales": 96,
+  "oraciones_descartadas_por_filtro": 29,
+  "oraciones_por_pagina": {
+    "1": 5,
+    "2": 5,
+    "3": 2,
+    "4": 1,
+    "5": 1,
+    "6": 5,
+    "7": 22,
+    "8": 3,
+    "9": 6,
+    "10": 4,
+    "11": 4,
+    "12": 20,
+    "13": 1,
+    "14": 6,
+    "15": 3,
+    "16": 5,
+    "17": 6,
+    "18": 6,
+    "19": 1,
+    "20": 1
+  },
+  "solape_doble_ciego": 0.3,
+  "oraciones_anotador_a": 62,
+  "oraciones_anotador_b": 63,
+  "oraciones_compartidas": 29,
+  "tamizado_phi": {
+    "motor": "solo reglas",
+    "residuos_detectados": 13,
+    "oraciones_omitidas": 13,
+    "categorias": [
+      "NOMBRE"
+    ]
+  },
+  "nota": "Agregados sin texto clinico. El CSV de oraciones no se publica en el repositorio."
+}

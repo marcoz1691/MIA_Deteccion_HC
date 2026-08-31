@@ -1,0 +1,46 @@
+S11 — suite unificada (2026-08-31)
+Comando: python -m pytest api s7/test_fallback.py s10/test_citimed_pipeline.py s11/tests s11/anonimizador_ocr/pruebas --cov=api --cov=s7 --cov=s10 --cov-report=term -q
+Frontend: npm test → 14 passed, 0 failed (s11/evidencias/_run_frontend.txt)
+
+.....................                                                    [100%]
+=============================== tests coverage ================================
+______________ coverage: platform win32, python 3.12.10-final-0 _______________
+
+Name                           Stmts   Miss  Cover
+--------------------------------------------------
+api\__init__.py                    0      0   100%
+api\db.py                         68     10    85%
+api\main.py                       62     62     0%
+api\qa_e2e_manual.py              98     98     0%
+api\qa_idioma_api.py              65     65     0%
+api\schemas.py                    60     60     0%
+api\service.py                   102    102     0%
+api\settings.py                   28      8    71%
+api\test_historial_db.py          26      1    96%
+api\test_settings.py              21      0   100%
+s7\__init__.py                     0      0   100%
+s7\analisis_por_tipo.py           69     69     0%
+s7\eval_citimed.py                78     78     0%
+s7\eval_idioma.py                 54     54     0%
+s7\eval_tfidf_idioma.py           48     48     0%
+s7\eval_tripartita.py            139    139     0%
+s7\inferencia.py                 197     65    67%
+s7\llm_client.py                 114     48    58%
+s7\metricas.py                    97     97     0%
+s7\preprocesamiento.py            64     64     0%
+s7\prompts.py                     22     10    55%
+s7\rag_index.py                   63     52    17%
+s7\test_fallback.py               66      7    89%
+s10\__init__.py                    0      0   100%
+s10\capture_demo.py                9      9     0%
+s10\capture_frontend.py           59     59     0%
+s10\citimed_utils.py              42     14    67%
+s10\generate_informe.py          290    290     0%
+s10\generate_presentacion.py     286    286     0%
+s10\organize_evidencias.py        47     47     0%
+s10\probar_citimed.py            126     82    35%
+s10\run_verificacion.py           39     39     0%
+s10\test_citimed_pipeline.py      42      1    98%
+--------------------------------------------------
+TOTAL                           2481   1964    21%
+21 passed in 3.40s

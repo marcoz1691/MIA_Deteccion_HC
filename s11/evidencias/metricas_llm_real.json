@@ -1,0 +1,231 @@
+{
+  "generado_utc": "2026-08-31T05:01:36+00:00",
+  "comando": "python s11/eval_llm_real.py --max-oraciones 400",
+  "dataset": "MEDEC-MS (público, sin datos de pacientes reales)",
+  "split": "test",
+  "n_oraciones": 400,
+  "modelo_llm": "gpt-4o-mini",
+  "temperatura": 0,
+  "mock": false,
+  "tarifas_usd_por_1m_tokens": {
+    "input": 0.15,
+    "output": 0.6
+  },
+  "brazos": {
+    "tfidf": {
+      "roc_auc": 0.9475,
+      "roc_auc_ci95": [
+        0.9469,
+        0.9162,
+        0.9732
+      ],
+      "auprc": 0.4055,
+      "auprc_ci95": [
+        0.4294,
+        0.2509,
+        0.6274
+      ],
+      "f1": 0.4839,
+      "precision": 0.3659,
+      "recall": 0.7143,
+      "accuracy": 0.92,
+      "matriz_confusion": [
+        [
+          353,
+          26
+        ],
+        [
+          6,
+          15
+        ]
+      ],
+      "localizacion_top1": 0.8571,
+      "latencia_ms_por_oracion": 0.381,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "costo_usd_total": 0.0,
+      "costo_usd_por_1000_oraciones": 0.0,
+      "estimacion_previa_usd_por_1000_oraciones": 0.0
+    },
+    "llm_zero": {
+      "roc_auc": 0.5094,
+      "roc_auc_ci95": [
+        0.5108,
+        0.4565,
+        0.5811
+      ],
+      "auprc": 0.0536,
+      "auprc_ci95": [
+        0.0559,
+        0.0325,
+        0.0822
+      ],
+      "f1": 0.0769,
+      "precision": 0.0645,
+      "recall": 0.0952,
+      "accuracy": 0.88,
+      "matriz_confusion": [
+        [
+          350,
+          29
+        ],
+        [
+          19,
+          2
+        ]
+      ],
+      "localizacion_top1": 0.0952,
+      "latencia_ms_por_oracion": 587.25,
+      "input_tokens": 32456,
+      "output_tokens": 400,
+      "tokens_por_oracion": 82.14,
+      "costo_usd_total": 0.005102,
+      "costo_usd_por_1000_oraciones": 0.0128,
+      "estimacion_previa_usd_por_1000_oraciones": 0.08,
+      "latencia_ms_p50": 534.68,
+      "latencia_ms_p95": 982.58,
+      "entradas_cache_encontradas": 400
+    },
+    "llm_rag": {
+      "roc_auc": 0.5067,
+      "roc_auc_ci95": [
+        0.5065,
+        0.4764,
+        0.5593
+      ],
+      "auprc": 0.0534,
+      "auprc_ci95": [
+        0.0558,
+        0.0325,
+        0.0876
+      ],
+      "f1": 0.0571,
+      "precision": 0.0714,
+      "recall": 0.0476,
+      "accuracy": 0.9175,
+      "matriz_confusion": [
+        [
+          366,
+          13
+        ],
+        [
+          20,
+          1
+        ]
+      ],
+      "localizacion_top1": 0.0952,
+      "latencia_ms_por_oracion": 535.35,
+      "input_tokens": 78365,
+      "output_tokens": 400,
+      "tokens_por_oracion": 196.91,
+      "costo_usd_total": 0.011988,
+      "costo_usd_por_1000_oraciones": 0.03,
+      "estimacion_previa_usd_por_1000_oraciones": 0.15,
+      "latencia_ms_p50": 523.06,
+      "latencia_ms_p95": 674.93,
+      "entradas_cache_encontradas": 400
+    }
+  },
+  "mcnemar": {
+    "tfidf_vs_llm_zero": {
+      "n01_soloB_acierta": 24,
+      "n10_soloA_acierta": 40,
+      "p_value": 0.059941
+    },
+    "tfidf_vs_llm_rag": {
+      "n01_soloB_acierta": 25,
+      "n10_soloA_acierta": 26,
+      "p_value": 1.0
+    },
+    "llm_zero_vs_llm_rag": {
+      "n01_soloB_acierta": 21,
+      "n10_soloA_acierta": 6,
+      "p_value": 0.005925
+    }
+  },
+  "llm_stats_corrida": {
+    "api_calls": 442,
+    "cache_hits": 358,
+    "avg_latency_ms": 552.42,
+    "total_input_tokens": 62252,
+    "total_output_tokens": 442,
+    "estimated_cost_usd": 0.0096,
+    "mock_mode": false,
+    "api_errors": 0,
+    "retries": 0
+  },
+  "comparacion_mock": {
+    "disponible": true,
+    "fuente": "s10/evidencias/metricas_tripartita.json",
+    "n_oraciones_mock": 500,
+    "brazos": {
+      "tfidf": {
+        "roc_auc_mock": 0.9537,
+        "roc_auc_real": 0.9475,
+        "delta_roc_auc": -0.0062,
+        "auprc_mock": 0.4755,
+        "auprc_real": 0.4055,
+        "delta_auprc": -0.07,
+        "f1_mock": 0.4938,
+        "f1_real": 0.4839,
+        "latencia_ms_mock": 0.412,
+        "latencia_ms_real": 0.381,
+        "localizacion_top1_mock": 0.8846,
+        "localizacion_top1_real": 0.8571
+      },
+      "llm_zero": {
+        "roc_auc_mock": 0.4979,
+        "roc_auc_real": 0.5094,
+        "delta_roc_auc": 0.0115,
+        "auprc_mock": 0.052,
+        "auprc_real": 0.0536,
+        "delta_auprc": 0.0016,
+        "f1_mock": 0.0,
+        "f1_real": 0.0769,
+        "latencia_ms_mock": 0.09,
+        "latencia_ms_real": 587.25,
+        "localizacion_top1_mock": 0.0385,
+        "localizacion_top1_real": 0.0952
+      },
+      "llm_rag": {
+        "roc_auc_mock": 0.4979,
+        "roc_auc_real": 0.5067,
+        "delta_roc_auc": 0.0088,
+        "auprc_mock": 0.052,
+        "auprc_real": 0.0534,
+        "delta_auprc": 0.0014,
+        "f1_mock": 0.0,
+        "f1_real": 0.0571,
+        "latencia_ms_mock": 0.16,
+        "latencia_ms_real": 535.35,
+        "localizacion_top1_mock": 0.0385,
+        "localizacion_top1_real": 0.0952
+      }
+    }
+  },
+  "sesgo_idioma_llm_real": {
+    "disponible": true,
+    "subset_n": 200,
+    "roc_auc_english": 0.4579,
+    "roc_auc_spanish": 0.4974,
+    "auprc_english": 0.05,
+    "auprc_spanish": 0.05,
+    "delta_auc_en_minus_es": -0.0395,
+    "delta_auprc_en_minus_es": 0.0,
+    "llm_stats": {
+      "api_calls": 248,
+      "cache_hits": 152,
+      "avg_latency_ms": 679.38,
+      "total_input_tokens": 20696,
+      "total_output_tokens": 248,
+      "estimated_cost_usd": 0.0033,
+      "mock_mode": false,
+      "api_errors": 0,
+      "retries": 0
+    }
+  },
+  "notas": [
+    "llm_stats_corrida solo contabiliza las llamadas que salieron a la API en esta ejecución; el consumo por brazo se reconstruye desde el cache de prompts y cubre las n oraciones evaluadas.",
+    "Las latencias LLM son las medidas en la llamada original a la API, no las de lectura de cache."
+  ]
+}

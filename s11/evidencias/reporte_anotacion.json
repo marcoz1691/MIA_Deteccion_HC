@@ -1,0 +1,24 @@
+{
+  "n_oraciones_citimed_extraidas": 96,
+  "n_oraciones_plantilla_sintetica": 4,
+  "n_oraciones_eval": 100,
+  "n_positivas": 2,
+  "prevalencia": 0.02,
+  "distribucion_error_type": {
+    "ninguno": 98,
+    "Medication": 1,
+    "Diagnosis": 1
+  },
+  "doble_ciego": {
+    "n_compartidas": 29,
+    "kappa_cohen": 1.0,
+    "acuerdo_simple": 1.0
+  },
+  "guia": "s11/docs/guia_anotacion.md",
+  "eval_cross_domain": {
+    "roc_auc": 0.7347,
+    "auprc": 0.2689,
+    "fuente": "salidas_s7/eval_citimed.json"
+  },
+  "nota": "El CSV anotado no se versiona. Kappa=1,0 refleja la aplicacion determinista de la guia en el piloto (misma regla en A y B), no un doble ciego humano independiente; ese paso queda para Patricio y Jose sobre el 30 % de solape. Las 2 positivas del eval son de la plantilla odontologica sintetica."
+}

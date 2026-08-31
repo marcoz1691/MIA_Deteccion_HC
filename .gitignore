@@ -238,6 +238,19 @@ s10/anonimizador/salidas/
 # Historias con PHI aparente: usar solo localmente (commit ejemplos/*.sintetico.txt)
 s10/anonimizador/ANONIMIZADOR/historia_ejemplo.txt
 s10/anonimizador/ANONIMIZADOR/historia_ejemplo_ANON.pdf
+# Anonimizador OCR (S11): historias reales y material de revision con PHI.
+# Solo salen del equipo local agregados sin texto y paginas ya tachadas verificadas.
+anonimizador/
+s11/anonimizador_ocr/historias/
+s11/anonimizador_ocr/salidas*/
+s11/evidencias/crudo/
+# Corpus anotado: texto clinico de un paciente real. Aunque esta de-identificado,
+# no se versiona; solo salen los agregados de reporte_extraccion.json.
+s11/corpus/*.csv
+# Modelos de idioma Tesseract (binarios grandes, se descargan en instalacion)
+s11/tessdata/
+*.zip
+
 # Temporales Microsoft Word
 ~$*
 ~WRL*.tmp
@@ -246,3 +259,5 @@ s10/anonimizador/ANONIMIZADOR/historia_ejemplo_ANON.pdf
 # Reportes locales de la suite SDET
 tests/eval/last_eval_report.json
 tests/perf/last_benchmark.json
+s11/evidencias/_run_*.txt
+s11/tools/_dump_*.txt

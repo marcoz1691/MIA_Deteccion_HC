@@ -1,0 +1,8 @@
+{
+  "nombre": "Ejemplo — cabecera de formulario MSP (ajustar midiendo sobre un PNG de revision/)",
+  "comentario": "Coordenadas RELATIVAS al tamaño de página (0 = borde izquierdo/superior, 1 = derecho/inferior). 'pagina' puede ser un número o 'todas'.",
+  "zonas": [
+    {"nombre": "cabecera datos paciente", "pagina": 1, "x0": 0.05, "y0": 0.06, "x1": 0.95, "y1": 0.14, "etiqueta": "ZONA"},
+    {"nombre": "casilla N° historia clínica", "pagina": "todas", "x0": 0.72, "y0": 0.01, "x1": 0.98, "y1": 0.05, "etiqueta": "HC"}
+  ]
+}

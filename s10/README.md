@@ -19,7 +19,7 @@ Repositorio: [github.com/marcoz1691/MIA_Deteccion_HC](https://github.com/marcoz1
 | [`docs/S10_Avance_Consolidado.docx`](docs/S10_Avance_Consolidado.docx) | Fuente editable Word |
 | [`evidencias/`](evidencias/) | JSON, CSV y figuras reproducibles |
 | [`generate_informe.py`](generate_informe.py) | Parte del Word S8, aplica correcciones del repo y exporta PDF |
-| [`capture_demo.py`](capture_demo.py) | Genera capturas demo (análisis, métricas, fallback) |
+| [`capture_demo.py`](capture_demo.py) | Compatibilidad: redirige a `s11/capture_prototipo.py` |
 | [`probar_citimed.py`](probar_citimed.py) | Anonimiza historias CITIMED → inferencia → CSV → eval |
 | [`anonimizador/ANONIMIZADOR/`](anonimizador/ANONIMIZADOR/) | Servicio de anonimización (texto/PDF) |
 | [`organize_evidencias.py`](organize_evidencias.py) | Copia JSON/figuras a `evidencias/` |

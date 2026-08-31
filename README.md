@@ -10,6 +10,25 @@ Reformular la tarea de **nivel nota** a **nivel oración** sobre MEDEC eleva el 
 
 ---
 
+## Entrega S11
+
+Borrador avanzado del documento final: cierra las tres deudas de la retroalimentación S10 (pytest declarado, LLM real, corpus CITIMED).
+
+| Recurso | Descripción |
+|---------|-------------|
+| [`s11/docs/S11_Borrador_Avanzado.pdf`](s11/docs/S11_Borrador_Avanzado.pdf) | PDF para Moodle y Teams |
+| [`s11/README.md`](s11/README.md) | Índice, evidencias y comandos |
+| [`s11/docs/anexo_etico.md`](s11/docs/anexo_etico.md) | Protocolo de de-identificación |
+| [`requirements-dev.txt`](requirements-dev.txt) | pytest y herramientas de prueba |
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest
+python s11/generate_informe.py
+```
+
+---
+
 ## Entrega S10
 
 Informe consolidado y evidencias cuantitativas alineadas con el repositorio (no el borrador S8).
@@ -25,7 +44,7 @@ Regenerar informe y evidencias:
 
 ```bash
 python s10/organize_evidencias.py   # copia JSON/figuras a s10/evidencias/
-python s10/capture_demo.py          # capturas del prototipo
+python s11/capture_prototipo.py     # capturas del frontend React (API + Vite en marcha)
 python s10/generate_informe.py      # Word S8 corregido + PDF (requiere MS Word en Windows)
 python s10/run_verificacion.py      # batería completa (opcional, ~10 min)
 ```
@@ -242,6 +261,11 @@ MIA_Deteccion_HC/
 ├── s10/                         # Entrega S10 — informe consolidado + evidencias
 │   ├── docs/                    # S10_Avance_Consolidado.pdf / .docx
 │   ├── evidencias/              # JSON, CSV, figuras (committeable)
+│   └── README.md
+├── s11/                         # Entrega S11 — borrador avanzado
+│   ├── docs/                    # PDF, anexo ético, guía de anotación
+│   ├── evidencias/              # LLM real, agregados OCR, capturas
+│   ├── anonimizador_ocr/        # OCR + tachado en píxel (sin PHI)
 │   └── README.md
 ├── tests/                       # Suite SDET (funcional, perf, eval, E2E)
 │   ├── README.md

@@ -1,0 +1,476 @@
+{
+  "metadatos": {
+    "generado_en": "2026-08-31T04:54:58+00:00",
+    "generado_por": "s11/sanitizar_evidencias.py",
+    "version_anonimizador": "0.1.0",
+    "entrada_nombre": "informe.json",
+    "entrada_sha256": "6a3de3a5921802b63954838b4597105f606a6adfa91a28234ca37ab2112a4edc",
+    "nota_phi": "Este archivo contiene unicamente agregados y conteos derivados de la corrida del anonimizador OCR. No contiene texto clinico, nombres, cedulas, numeros de historia clinica, telefonos, correos, direcciones ni fechas del documento original. El informe detallado, el CSV de hallazgos y las imagenes de revision si contienen PHI y no salen del equipo local."
+  },
+  "resumen": {
+    "n_documentos": 1,
+    "n_paginas": 20,
+    "n_hallazgos": 127,
+    "n_cajas_tachadas": 87,
+    "n_palabras_reconocidas": 5212,
+    "segundos_procesamiento": 77.5,
+    "n_paginas_a_revisar": 1
+  },
+  "hallazgos_por_etiqueta": {
+    "NOMBRE": 108,
+    "CEDULA": 6,
+    "HC": 4,
+    "NOMBRE+HC": 3,
+    "CEDULA+HC": 1,
+    "DIRECCION": 1,
+    "HC+CEDULA+NOMBRE": 1,
+    "HC+NOMBRE": 1,
+    "NOMBRE+CEDULA": 1,
+    "NOMBRE+HC+CEDULA+HC": 1
+  },
+  "hallazgos_por_origen": {
+    "contexto": 52,
+    "ner": 43,
+    "celda": 12,
+    "etiqueta": 12,
+    "regex": 8
+  },
+  "confianza_ocr_por_pagina": {
+    "minimo": 40.2,
+    "maximo": 89.6,
+    "media": 74.57,
+    "mediana": 80.3
+  },
+  "fuentes_de_palabras": {
+    "tesseract": 20
+  },
+  "paginas": [
+    {
+      "documento": "hc0001",
+      "pagina": 1,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 250,
+      "conf_media": 70.7,
+      "angulo_corregido": 0.0,
+      "n_cajas": 4,
+      "n_hallazgos": 7,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 5,
+        "CEDULA": 1,
+        "DIRECCION": 1
+      },
+      "hallazgos_por_origen": {
+        "contexto": 4,
+        "celda": 1,
+        "ner": 1,
+        "regex": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 2,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 294,
+      "conf_media": 76.2,
+      "angulo_corregido": 0.0,
+      "n_cajas": 8,
+      "n_hallazgos": 9,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 9
+      },
+      "hallazgos_por_origen": {
+        "contexto": 7,
+        "celda": 1,
+        "ner": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 3,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 25,
+      "conf_media": 85.7,
+      "angulo_corregido": 0.0,
+      "n_cajas": 2,
+      "n_hallazgos": 2,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "HC": 1,
+        "NOMBRE": 1
+      },
+      "hallazgos_por_origen": {
+        "contexto": 1,
+        "etiqueta": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 4,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 73,
+      "conf_media": 58.6,
+      "angulo_corregido": 0.0,
+      "n_cajas": 1,
+      "n_hallazgos": 3,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "HC": 1,
+        "NOMBRE": 1,
+        "NOMBRE+HC": 1
+      },
+      "hallazgos_por_origen": {
+        "celda": 1,
+        "ner": 1,
+        "regex": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 5,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 264,
+      "conf_media": 67.0,
+      "angulo_corregido": 0.0,
+      "n_cajas": 3,
+      "n_hallazgos": 6,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 6
+      },
+      "hallazgos_por_origen": {
+        "contexto": 4,
+        "celda": 1,
+        "ner": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 6,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 239,
+      "conf_media": 59.4,
+      "angulo_corregido": 0.0,
+      "n_cajas": 6,
+      "n_hallazgos": 6,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 6
+      },
+      "hallazgos_por_origen": {
+        "ner": 5,
+        "contexto": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 7,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 622,
+      "conf_media": 83.4,
+      "angulo_corregido": 0.0,
+      "n_cajas": 9,
+      "n_hallazgos": 9,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 8,
+        "HC": 1
+      },
+      "hallazgos_por_origen": {
+        "ner": 5,
+        "contexto": 2,
+        "etiqueta": 2
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 8,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 478,
+      "conf_media": 87.2,
+      "angulo_corregido": 0.0,
+      "n_cajas": 2,
+      "n_hallazgos": 11,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 9,
+        "CEDULA": 1,
+        "NOMBRE+CEDULA": 1
+      },
+      "hallazgos_por_origen": {
+        "ner": 9,
+        "celda": 1,
+        "regex": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 9,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 591,
+      "conf_media": 63.5,
+      "angulo_corregido": 0.0,
+      "n_cajas": 6,
+      "n_hallazgos": 7,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 5,
+        "NOMBRE+HC": 2
+      },
+      "hallazgos_por_origen": {
+        "contexto": 4,
+        "etiqueta": 3
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 10,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 329,
+      "conf_media": 40.2,
+      "angulo_corregido": 0.0,
+      "n_cajas": 2,
+      "n_hallazgos": 3,
+      "requiere_revision": true,
+      "motivo_revision": "confianza OCR media 40 < 55 (probable manuscrito)",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 3
+      },
+      "hallazgos_por_origen": {
+        "contexto": 1,
+        "etiqueta": 1,
+        "ner": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 11,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 145,
+      "conf_media": 55.8,
+      "angulo_corregido": 0.0,
+      "n_cajas": 1,
+      "n_hallazgos": 1,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 1
+      },
+      "hallazgos_por_origen": {
+        "ner": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 12,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 319,
+      "conf_media": 89.6,
+      "angulo_corregido": 0.0,
+      "n_cajas": 7,
+      "n_hallazgos": 10,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 10
+      },
+      "hallazgos_por_origen": {
+        "ner": 6,
+        "contexto": 3,
+        "etiqueta": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 13,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 31,
+      "conf_media": 70.3,
+      "angulo_corregido": 0.0,
+      "n_cajas": 1,
+      "n_hallazgos": 2,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 2
+      },
+      "hallazgos_por_origen": {
+        "contexto": 1,
+        "etiqueta": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 14,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 419,
+      "conf_media": 84.7,
+      "angulo_corregido": 0.0,
+      "n_cajas": 4,
+      "n_hallazgos": 8,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 7,
+        "HC+NOMBRE": 1
+      },
+      "hallazgos_por_origen": {
+        "contexto": 5,
+        "ner": 2,
+        "celda": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 15,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 200,
+      "conf_media": 87.0,
+      "angulo_corregido": 0.0,
+      "n_cajas": 5,
+      "n_hallazgos": 11,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 11
+      },
+      "hallazgos_por_origen": {
+        "contexto": 6,
+        "ner": 3,
+        "celda": 1,
+        "etiqueta": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 16,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 377,
+      "conf_media": 83.4,
+      "angulo_corregido": 0.0,
+      "n_cajas": 9,
+      "n_hallazgos": 9,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 7,
+        "CEDULA": 1,
+        "HC": 1
+      },
+      "hallazgos_por_origen": {
+        "ner": 3,
+        "contexto": 2,
+        "etiqueta": 2,
+        "celda": 1,
+        "regex": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 17,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 129,
+      "conf_media": 79.4,
+      "angulo_corregido": 0.0,
+      "n_cajas": 5,
+      "n_hallazgos": 7,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 5,
+        "CEDULA": 1,
+        "HC+CEDULA+NOMBRE": 1
+      },
+      "hallazgos_por_origen": {
+        "celda": 2,
+        "contexto": 2,
+        "ner": 2,
+        "regex": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 18,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 209,
+      "conf_media": 83.8,
+      "angulo_corregido": 0.0,
+      "n_cajas": 6,
+      "n_hallazgos": 7,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 6,
+        "CEDULA": 1
+      },
+      "hallazgos_por_origen": {
+        "contexto": 4,
+        "celda": 1,
+        "ner": 1,
+        "regex": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 19,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 126,
+      "conf_media": 84.3,
+      "angulo_corregido": 0.0,
+      "n_cajas": 3,
+      "n_hallazgos": 5,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 4,
+        "CEDULA": 1
+      },
+      "hallazgos_por_origen": {
+        "contexto": 3,
+        "ner": 1,
+        "regex": 1
+      }
+    },
+    {
+      "documento": "hc0001",
+      "pagina": 20,
+      "fuente_palabras": "tesseract",
+      "n_palabras": 92,
+      "conf_media": 81.2,
+      "angulo_corregido": 0.0,
+      "n_cajas": 3,
+      "n_hallazgos": 4,
+      "requiere_revision": false,
+      "motivo_revision": "",
+      "hallazgos_por_etiqueta": {
+        "NOMBRE": 2,
+        "CEDULA+HC": 1,
+        "NOMBRE+HC+CEDULA+HC": 1
+      },
+      "hallazgos_por_origen": {
+        "contexto": 2,
+        "celda": 1,
+        "regex": 1
+      }
+    }
+  ],
+  "paginas_a_revisar": [
+    {
+      "documento": "hc0001",
+      "pagina": 10,
+      "conf_media": 40.2,
+      "n_palabras": 329,
+      "motivo_revision": "confianza OCR media 40 < 55 (probable manuscrito)"
+    }
+  ]
+}

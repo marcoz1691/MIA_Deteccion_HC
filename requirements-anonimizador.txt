@@ -1,0 +1,21 @@
+# Anonimizador OCR de historias clinicas escaneadas (s11/anonimizador_ocr/)
+#
+# Instalar sobre el entorno principal:
+#   pip install -r requirements-anonimizador.txt
+#   python -m spacy download es_core_news_md
+#
+# Requiere ademas el binario Tesseract OCR con el paquete de idioma espanol:
+#   Windows: winget install --id UB-Mannheim.TesseractOCR
+#   Linux:   sudo apt install tesseract-ocr tesseract-ocr-spa
+#   macOS:   brew install tesseract tesseract-lang
+#
+# Si spa.traineddata no queda junto al binario, apuntar TESSDATA_PREFIX
+# a la carpeta que contenga eng.traineddata y spa.traineddata.
+
+pymupdf>=1.24
+pytesseract>=0.3.10
+opencv-python-headless>=4.8
+pillow>=10.0
+spacy>=3.8,<3.9
+# Motor OCR alternativo, algo mejor con manuscrito legible (pesado, arrastra torch):
+# easyocr>=1.7

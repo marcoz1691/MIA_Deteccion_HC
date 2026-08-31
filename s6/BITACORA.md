@@ -216,8 +216,26 @@ cd frontend && npm install && npm run dev
 **Entregables:** `s10/docs/S10_Avance_Consolidado.pdf` (Moodle), `s10/evidencias/`.
 
 **Próximo (post-S10)**
-- [ ] Eval tripartita con API real u Ollama local.
-- [ ] Corpus CITIMED anonimizado.
+- [x] Eval tripartita con API real (S11, gpt-4o-mini, n=400).
+- [x] Corpus CITIMED anonimizado (muestra piloto S11).
 - [ ] Cascada TF-IDF→LLM codificada en `inferencia.py`.
 - [ ] MLOps (MLflow/DVC/Docker) en entorno separado.
+
+---
+
+## S11 — Borrador avanzado (deudas S10)
+
+**Cambios**
+- `pytest` declarado en `requirements-dev.txt`; suite unificada (api/, s7, s10, s11).
+- Evaluación LLM real: `s11/eval_llm_real.py` → `s11/evidencias/metricas_llm_real.json`.
+- Anonimizador OCR 1.5 en `s11/anonimizador_ocr/` (historias y salidas con PHI fuera de git).
+- Corpus piloto extraído del PDF buscable; residuos NOMBRE omitidos; kappa en `reporte_anotacion.json`.
+- Anexo ético y guía de anotación. Informe: `s11/docs/S11_Borrador_Avanzado.pdf`.
+
+**Hallazgos**
+1. LLM real (gpt-4o-mini) no supera a TF-IDF (AUC ≈ 0,51 vs 0,95). La limitación del mock queda cerrada.
+2. Recall de-identificación en capa de texto: CÉDULA y HC = 1,0; NOMBRE = 0,90 (ciclo de corrección: 11 oraciones omitidas).
+3. Muestra piloto < 500 oraciones: se declara como avance, no como corpus final.
+
+**Entregables:** `s11/docs/S11_Borrador_Avanzado.pdf`, `s11/evidencias/`.
 
