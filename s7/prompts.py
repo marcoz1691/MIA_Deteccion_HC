@@ -1,13 +1,23 @@
 """Plantillas de prompt para LLM zero-shot y LLM+RAG (inglés y español)."""
 
 EJES_MVP_ES = (
-    "Ejes MVP a revisar siempre (contra el resto de la nota, solo estos cinco): "
-    "1) lateralidad (izquierda/derecha), "
+    "Ejes MVP a revisar siempre (contra el resto de la nota, solo estos cuatro): "
+    "1) lateralidad: contrasta el diagnóstico o procedimiento con el examen físico "
+    "(parte anatómica + lado). Marca SI si el lado no coincide "
+    "(fractura de pie derecho vs examen de pie izquierdo) o si la parte no coincide "
+    "(pie derecho vs mano derecha). "
+    "Marca SI también si el mismo lado y el mismo sitio tienen hallazgos opuestos "
+    "(nódulo en lóbulo tiroideo izquierdo vs «no se evidencian lesiones focales» en el lóbulo tiroideo izquierdo). "
+    "No marques SI por plantillas «DERECHO/IZQUIERDO» (ambos lados en un formulario), "
+    "ni si el examen no especifica lado, ni si describe ambas extremidades sin contradecir el diagnóstico. "
     "2) sexo/género del paciente, "
     "3) alergias vs prescripciones, "
-    "4) medicamentos (dosis, duplicidad, contradicción con la nota), "
-    "5) edad vs hallazgos o procedimientos. "
-    "Marca SI únicamente si la oración contradice la nota en uno de esos cinco ejes. "
+    "4) edad vs hallazgos o procedimientos. "
+    "Marca SI únicamente si la oración contradice la nota en uno de esos cuatro ejes. "
+    "Medicamentos (dosis, duplicidad, omeprazol u otro fármaco suspendido para un procedimiento "
+    "vs tratamiento habitual) aún no se evalúan: responde NO. "
+    "Responde NO si la oración es solo motivo de consulta, control endoscópico, "
+    "seguimiento de una patología, valoración o procedimiento programado: no es contradicción. "
     "Responde NO si el posible problema es de otro tipo clínico: "
     "tolerancia oral o dieta vs alta, signos vitales vs plan, "
     "procedimiento vs complicaciones, hemodinamia, náuseas, dolor o indicaciones de egreso. "
@@ -19,13 +29,23 @@ EJES_MVP_ES = (
 )
 
 EJES_MVP_EN = (
-    "MVP axes to always check (against the rest of the note, only these five): "
-    "1) laterality (left/right), "
+    "MVP axes to always check (against the rest of the note, only these four): "
+    "1) laterality: compare diagnosis or procedure with the physical exam "
+    "(body part + side). Reply YES if the side does not match "
+    "(right foot fracture vs left-foot exam) or the part does not match "
+    "(right foot vs right hand). "
+    "Also reply YES if the same side and same site have opposite findings "
+    "(nodule in the left thyroid lobe vs “no focal lesions” in the left thyroid lobe). "
+    "Reply NO for form blanks such as RIGHT/LEFT, if the exam omits the side, "
+    "or if both limbs are described without contradicting the diagnosis. "
     "2) patient sex/gender, "
     "3) allergies vs prescriptions, "
-    "4) medications (dose, duplication, contradiction with the note), "
-    "5) age vs findings or procedures. "
-    "Reply YES only if the sentence contradicts the note on one of those five axes. "
+    "4) age vs findings or procedures. "
+    "Reply YES only if the sentence contradicts the note on one of those four axes. "
+    "Medications (dose, duplication, omeprazole or another drug held for a procedure "
+    "versus usual therapy) are out of scope for now: reply NO. "
+    "Reply NO if the sentence is only the reason for visit, endoscopic follow-up, "
+    "disease surveillance, evaluation, or a scheduled procedure: that is not a contradiction. "
     "Reply NO for other clinical judgments: oral intake or diet vs discharge, "
     "vital signs vs plan, procedure vs complications, hemodynamics, nausea, pain, or discharge orders. "
     "Do not infer fine-grained drug-disease contraindications; that is a later medical model. "
@@ -33,7 +53,7 @@ EJES_MVP_EN = (
     "(admission note, current illness, physical exam, evolution, orders, allergies, analysis)."
 )
 
-ZERO_SHOT_EN = """You are a clinical documentation reviewer. Judge whether the sentence is inconsistent with the rest of the medical note on the five MVP axes only (laterality, sex, allergies, medications, age). If it is not one of those axes, reply NO.
+ZERO_SHOT_EN = """You are a clinical documentation reviewer. Judge whether the sentence is inconsistent with the rest of the medical note on the four MVP axes only (laterality, sex, allergies, age). Do not score medications. If it is not one of those axes, reply NO.
 
 {ejes}
 
@@ -44,7 +64,7 @@ Sentence: "{oracion}"
 
 Reply with ONLY one word: YES if inconsistent, NO if consistent."""
 
-ZERO_SHOT_ES = """Eres un revisor de historias clínicas. Determina si la oración es inconsistente con el resto de la nota solo en los cinco ejes MVP (lateralidad, sexo, alergias, medicamentos, edad). Si no encaja en esos ejes, responde NO.
+ZERO_SHOT_ES = """Eres un revisor de historias clínicas. Determina si la oración es inconsistente con el resto de la nota solo en los cuatro ejes MVP (lateralidad, sexo, alergias, edad). No evalúes medicamentos. Si no encaja en esos ejes, responde NO.
 
 {ejes}
 
@@ -55,7 +75,7 @@ Oración: "{oracion}"
 
 Responde SOLO con una palabra: SI si es inconsistente, NO si es consistente."""
 
-RAG_EN = """You are a clinical documentation reviewer. Use the reference knowledge only when it maps to an MVP axis. Judge whether the sentence is a clinical inconsistency on laterality, sex, allergies, medications, or age. Otherwise reply NO.
+RAG_EN = """You are a clinical documentation reviewer. Use the reference knowledge only when it maps to an MVP axis. Judge whether the sentence is a clinical inconsistency on laterality, sex, allergies, or age. Do not score medications. Otherwise reply NO.
 
 {ejes}
 
@@ -69,7 +89,7 @@ Sentence from medical note: "{oracion}"
 
 Reply with ONLY one word: YES if inconsistent, NO if consistent."""
 
-RAG_ES = """Eres un revisor de historias clínicas. Usa el conocimiento de referencia solo si aplica a un eje MVP. Determina si la oración es inconsistente en lateralidad, sexo, alergias, medicamentos o edad. Si no, responde NO.
+RAG_ES = """Eres un revisor de historias clínicas. Usa el conocimiento de referencia solo si aplica a un eje MVP. Determina si la oración es inconsistente en lateralidad, sexo, alergias o edad. No evalúes medicamentos. Si no, responde NO.
 
 {ejes}
 

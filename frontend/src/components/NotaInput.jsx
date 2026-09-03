@@ -144,8 +144,8 @@ export default function NotaInput({
           </label>
           <p className="hint">
             Contrasta <strong>lateralidad</strong>, <strong>sexo</strong>,{" "}
-            <strong>alergias</strong>, <strong>medicamentos</strong> y{" "}
-            <strong>edad</strong>. El umbral 0.50 usa TF-IDF + LLM.
+            <strong>alergias</strong> y <strong>edad</strong>. Medicamentos aún no
+            se evalúan. El umbral 0.50 usa TF-IDF + LLM.
           </p>
           <div className="expediente-editor">
             {pdfExtrayendo && (
