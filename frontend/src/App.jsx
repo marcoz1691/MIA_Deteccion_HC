@@ -4,9 +4,12 @@ import {
   analizarNota,
   clearHistorialApi,
   deleteHistorialItem,
+  extraerPdfEstructurado,
   fetchHistorial,
   healthCheck,
+  listarMuestrasPdf,
 } from "./api/client";
+import EvolucionPreview from "./components/EvolucionPreview";
 import HeaderBrand from "./components/HeaderBrand";
 import HistorialPanel from "./components/HistorialPanel";
 import NotaInput from "./components/NotaInput";
@@ -15,13 +18,13 @@ import { EJEMPLOS } from "./ejemplos";
 import { mapHistorialList } from "./historial";
 
 async function loadHistorialFromApi() {
-  const data = await fetchHistorial(10);
+  const data = await fetchHistorial(50);
   return mapHistorialList(data);
 }
 
 export default function App() {
-  const [ejemploId, setEjemploId] = useState("medicacion");
-  const [nota, setNota] = useState(EJEMPLOS.find((e) => e.id === "medicacion").texto);
+  const [ejemploId, setEjemploId] = useState("propia");
+  const [nota, setNota] = useState("");
   const [idioma, setIdioma] = useState("spanish");
   const [mockLlm, setMockLlm] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -31,7 +34,13 @@ export default function App() {
   const [historial, setHistorial] = useState([]);
   const [historialActivoId, setHistorialActivoId] = useState(null);
   const [historialError, setHistorialError] = useState(null);
-  const [historialRailOpen, setHistorialRailOpen] = useState(false);
+  const [historialRailOpen, setHistorialRailOpen] = useState(true);
+  const [muestrasPdf, setMuestrasPdf] = useState([]);
+  const [pdfExtrayendo, setPdfExtrayendo] = useState(false);
+  const [pdfAviso, setPdfAviso] = useState(null);
+  const [pdfError, setPdfError] = useState(null);
+  const [pdfCargado, setPdfCargado] = useState(null);
+  const [evolucion, setEvolucion] = useState(null);
 
   const isDev = import.meta.env.DEV;
 
@@ -63,6 +72,12 @@ export default function App() {
       .catch(() => setHealth({ status: "offline", modelo_tfidf_disponible: false }));
   }, [isDev]);
 
+  useEffect(() => {
+    listarMuestrasPdf()
+      .then((data) => setMuestrasPdf(data.muestras ?? []))
+      .catch(() => setMuestrasPdf([]));
+  }, []);
+
   function handleEjemploChange(id) {
     const ejemplo = EJEMPLOS.find((e) => e.id === id);
     setEjemploId(id);
@@ -70,6 +85,69 @@ export default function App() {
     setResultado(null);
     setError(null);
     setHistorialActivoId(null);
+    setPdfAviso(null);
+    setPdfError(null);
+    setPdfCargado(null);
+    setEvolucion(null);
+  }
+
+  async function aplicarExtraccion(promesa, muestraId = null, nombreLocal = null) {
+    setPdfExtrayendo(true);
+    setEjemploId("pdf");
+    setPdfError(null);
+    setPdfAviso(null);
+    setEvolucion(null);
+    if (nombreLocal) {
+      setPdfCargado({ nombre: nombreLocal, muestraId });
+    }
+    try {
+      const data = await promesa;
+      setNota(data.texto_plano ?? "");
+      setEjemploId("pdf");
+      setPdfCargado({
+        nombre: data.origen || "documento.pdf",
+        muestraId,
+      });
+      setEvolucion({
+        entries: data.entries ?? [],
+        motor: data.motor,
+        aviso: data.aviso ?? null,
+        paginasSinContenido: data.paginas_sin_contenido ?? [],
+      });
+      setResultado(null);
+      setError(null);
+      setHistorialActivoId(null);
+    } catch (exc) {
+      setPdfCargado(null);
+      setEjemploId("propia");
+      setPdfError(exc.message || "No se pudo extraer el texto del PDF.");
+    } finally {
+      setPdfExtrayendo(false);
+    }
+  }
+
+  function handlePdfFile(file) {
+    if (!file) return;
+    void aplicarExtraccion(extraerPdfEstructurado({ file }), null, file.name);
+  }
+
+  function handlePdfMuestra(muestraId) {
+    const muestra = muestrasPdf.find((item) => item.id === muestraId);
+    void aplicarExtraccion(
+      extraerPdfEstructurado({ muestraId }),
+      muestraId,
+      muestra?.nombre ?? "muestra.pdf",
+    );
+  }
+
+  function handlePdfQuitar() {
+    setPdfCargado(null);
+    setPdfAviso(null);
+    setPdfError(null);
+    setEvolucion(null);
+    setEjemploId("propia");
+    setNota("");
+    setResultado(null);
   }
 
   async function refreshHistorial(activeId = null) {
@@ -93,7 +171,7 @@ export default function App() {
   async function handleAnalizar() {
     const texto = nota.trim();
     if (!texto) {
-      setError("Ingresa una nota clínica o selecciona un ejemplo.");
+      setError("Ingresa el texto de la historia clínica o selecciona un caso de demostración.");
       setResultado(null);
       return;
     }
@@ -111,7 +189,7 @@ export default function App() {
       void refreshHistorial(data.historial_id ?? null);
     } catch (exc) {
       setResultado(null);
-      setError(exc.message || "No se pudo analizar la nota.");
+      setError(exc.message || "No se pudo analizar la historia clínica.");
     } finally {
       setLoading(false);
     }
@@ -125,6 +203,10 @@ export default function App() {
     setResultado(item.resultado);
     setError(null);
     setHistorialActivoId(item.id);
+    setPdfAviso(null);
+    setPdfError(null);
+    setPdfCargado(null);
+    setEvolucion(null);
   }
 
   async function handleHistorialRemove(id) {
@@ -137,6 +219,18 @@ export default function App() {
     } catch (exc) {
       setHistorialError(exc.message || "No se pudo eliminar el análisis.");
     }
+  }
+
+  function handleNuevaRevision() {
+    setEjemploId("propia");
+    setNota("");
+    setResultado(null);
+    setError(null);
+    setHistorialActivoId(null);
+    setPdfAviso(null);
+    setPdfError(null);
+    setPdfCargado(null);
+    setEvolucion(null);
   }
 
   async function handleHistorialClear() {
@@ -154,35 +248,28 @@ export default function App() {
   const healthReady = !isDev || health !== null;
 
   return (
-    <div className="app">
-      <HeaderBrand
-        isDev={isDev}
-        backendOk={backendOk}
-        healthReady={healthReady}
-        health={health}
+    <div className="app app-libre">
+      <HistorialPanel
+        open={historialRailOpen}
+        items={historial}
+        activeId={historialActivoId}
+        error={historialError}
+        onToggle={() => setHistorialRailOpen((open) => !open)}
+        onNew={handleNuevaRevision}
+        onSelect={handleHistorialSelect}
+        onRemove={handleHistorialRemove}
+        onClear={handleHistorialClear}
       />
-
-      <div className="shell shell-workspace">
-        <button
-          type="button"
-          className="ghost-btn historial-toggle"
-          aria-controls="historial-rail"
-          aria-expanded={historialRailOpen}
-          onClick={() => setHistorialRailOpen((open) => !open)}
-        >
-          {historialRailOpen ? "Ocultar historial" : "Mostrar historial"}
-        </button>
-        <HistorialPanel
-          className={`historial-rail ${historialRailOpen ? "is-open" : ""}`}
-          items={historial}
-          activeId={historialActivoId}
-          error={historialError}
-          onSelect={handleHistorialSelect}
-          onRemove={handleHistorialRemove}
-          onClear={handleHistorialClear}
+      <div className="app-stage">
+        <HeaderBrand
+          isDev={isDev}
+          backendOk={backendOk}
+          healthReady={healthReady}
+          health={health}
         />
 
-        <main className="workspace">
+        <div className="shell shell-workspace">
+          <main className="workspace">
           <NotaInput
             nota={nota}
             onNotaChange={(value) => {
@@ -197,11 +284,34 @@ export default function App() {
             onMockLlmChange={setMockLlm}
             showMockOption={isDev}
             mockLlmForced={Boolean(health?.mock_llm_forzado)}
-            loading={loading}
-            canAnalyze={Boolean(nota.trim()) && healthReady}
+            loading={loading || pdfExtrayendo}
+            canAnalyze={Boolean(nota.trim()) && healthReady && !pdfExtrayendo}
             backendOk={backendOk && healthReady}
             showBackendHint={isDev}
             onAnalizar={handleAnalizar}
+            muestrasPdf={muestrasPdf}
+            pdfAviso={pdfAviso}
+            pdfError={pdfError}
+            pdfCargado={pdfCargado}
+            pdfExtrayendo={pdfExtrayendo}
+            onPdfFile={handlePdfFile}
+            onPdfMuestra={handlePdfMuestra}
+            onPdfQuitar={handlePdfQuitar}
+            evolucionPreview={
+              evolucion?.entries?.length ? (
+                <EvolucionPreview
+                  entries={evolucion.entries}
+                  motor={evolucion.motor}
+                  aviso={evolucion.aviso}
+                  paginasSinContenido={evolucion.paginasSinContenido}
+                />
+              ) : null
+            }
+            pdfResumen={
+              evolucion?.entries?.length
+                ? `${evolucion.entries.length} evolución${evolucion.entries.length === 1 ? "" : "es"} en el expediente`
+                : null
+            }
           />
           <ResultadosPanel
             resultado={resultado}
@@ -210,6 +320,7 @@ export default function App() {
             mockLlm={mockLlm}
           />
         </main>
+        </div>
       </div>
     </div>
   );

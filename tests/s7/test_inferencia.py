@@ -28,6 +28,30 @@ def test_tc_ml_01_segmentacion_minima():
 
 
 @pytest.mark.regression
+def test_no_segmenta_titulos_ni_subtitulos_de_la_hc():
+    nota = """
+    --- EVOLUCIÓN 1 ---
+    FECHA: 2026-07-06  HORA: 09:06
+    NOTAS DE EVOLUCIÓN:
+    NOTA DE INGRESO
+    PACIENTE MASCULINO DE 39 AÑOS.
+    ENFERMEDAD ACTUAL:
+    PACIENTE FEMENINO CON ANTECEDENTE DE METAPLASIA.
+    EXAMEN FISICO:
+    SIGNOS VITALES: PA: 120/77 FC: 82
+    """
+    textos = [t for _, t in segmentar_nota(nota)]
+    assert not any(t.upper().strip(": ").endswith("INGRESO") and len(t) < 40 for t in textos if "PACIENTE" not in t.upper())
+    assert "NOTA DE INGRESO" not in textos
+    assert "ENFERMEDAD ACTUAL:" not in textos
+    assert "EXAMEN FISICO:" not in textos
+    assert "--- EVOLUCIÓN 1 ---" not in textos
+    assert any("PACIENTE MASCULINO" in t for t in textos)
+    assert any("PACIENTE FEMENINO" in t for t in textos)
+    assert any("PA: 120/77" in t for t in textos)
+
+
+@pytest.mark.regression
 def test_tc_ml_02_formula_combinada():
     """TC-ML-02: score_localizacion = 0.65×LLM + 0.35×TF-IDF."""
     res = ResultadoOracion(sid=0, oracion="test", score_tfidf=0.4, score_llm_zero=0.8)
@@ -81,6 +105,29 @@ def test_tc_ml_05_mock_heuristics_medicacion():
     alertas = [o for o in resultado.oraciones if o.score_llm_zero == 1.0]
     assert len(alertas) >= 1
     assert any("amoxicilina" in o.oracion.lower() for o in alertas)
+
+
+@pytest.mark.regression
+def test_mvp_sexo_lo_marca_el_llm_con_la_nota_completa():
+    """PACIENTE FEMENINO contradice MASCULINO en la nota → score LLM, no regla forzada."""
+    nota = (
+        "PACIENTE MASCULINO DE 39 AÑOS. "
+        "ENFERMEDAD ACTUAL: PACIENTE FEMENINO CON ANTECEDENTE DE METAPLASIA GASTRICA."
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        client = LLMClient(mock=True, cache_dir=Path(tmp))
+        resultado = analizar_nota(
+            nota,
+            cfg={"salidas": {"modelo_tfidf": "x", "cache_dir": tmp}, "llm": {}, "rag": {}},
+            brazos=["llm_zero"],
+            mock_llm=True,
+            idioma="spanish",
+            client=client,
+        )
+    femeninas = [o for o in resultado.oraciones if "femenino" in o.oracion.lower()]
+    assert femeninas
+    assert femeninas[0].score_llm_zero == 1.0
+    assert femeninas[0].alerta(0.5, ["llm_zero"]) is True
 
 
 @pytest.mark.regression
@@ -146,3 +193,23 @@ def test_tc_ml_09_fallback_happy_path():
     assert resultado.modo_degradado is False
     assert all(o.score_tfidf is not None for o in resultado.oraciones)
     assert resultado.top1() is not None
+
+
+@pytest.mark.regression
+def test_analiza_todas_las_frases_no_solo_las_primeras_20():
+    """Una nota de 84 frases debe analizarse completa, no truncarse a 20."""
+    texto = ". ".join(
+        f"Frase clinica numero {i} para revision del prototipo" for i in range(1, 85)
+    ) + "."
+    with tempfile.TemporaryDirectory() as tmp:
+        client = LLMClient(mock=True, cache_dir=Path(tmp))
+        resultado = analizar_nota(
+            texto,
+            cfg={"salidas": {"modelo_tfidf": "x", "cache_dir": tmp}, "llm": {}, "rag": {}},
+            brazos=["llm_zero"],
+            mock_llm=True,
+            client=client,
+        )
+    assert resultado.n_total == 84
+    assert resultado.truncado is False
+    assert len(resultado.oraciones) == 84

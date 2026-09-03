@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from tests.fixtures.notas import NOTA_LARGA, NOTA_LIMPIA, NOTA_MEDICACION, NOTA_PLAN, NOTAS_IDIOMA
+from s7.inferencia import MAX_ORACIONES_DEMO
+from tests.fixtures.notas import NOTA_LIMPIA, NOTA_MEDICACION, NOTA_PLAN, NOTAS_IDIOMA
 
 
 @pytest.mark.regression
@@ -106,11 +107,14 @@ class TestGenerarHappyPath:
         assert all(not o["alerta"] for o in resp.json()["oraciones"])
 
     def test_tc_api_16_truncado(self, client):
-        """TC-API-16: Nota larga (>20 oraciones) — truncado."""
+        """TC-API-16: Nota más larga que el tope — truncado."""
+        nota = ". ".join(
+            [f"Oracion numero {i} sin inconsistencia aparente" for i in range(1, MAX_ORACIONES_DEMO + 6)]
+        ) + "."
         resp = client.post(
             "/generar",
             json={
-                "nota_clinica": NOTA_LARGA,
+                "nota_clinica": nota,
                 "mock_llm": True,
                 "brazos": ["llm_zero"],
                 "umbral": 0.5,
@@ -119,8 +123,8 @@ class TestGenerarHappyPath:
         assert resp.status_code == 200
         data = resp.json()
         assert data["truncado"] is True
-        assert data["n_total"] > 20
-        assert len(data["oraciones"]) == 20
+        assert data["n_total"] > MAX_ORACIONES_DEMO
+        assert len(data["oraciones"]) == MAX_ORACIONES_DEMO
 
     def test_tc_api_24_umbral_cero(self, client):
         """TC-API-24: Umbral 0.0 — todas las oraciones alertan."""
@@ -222,6 +226,7 @@ def test_tc_api_21_503_sin_llm_ni_tfidf(client_no_model, monkeypatch):
     monkeypatch.setenv("MOCK_LLM", "false")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
     import api.main as main_module
 

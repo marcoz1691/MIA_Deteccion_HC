@@ -18,7 +18,7 @@ from s7.rag_index import RAGIndex
 Idioma = Literal["english", "spanish"]
 Brazo = Literal["tfidf", "llm_zero", "llm_rag"]
 
-MAX_ORACIONES_DEMO = 20
+MAX_ORACIONES_DEMO = 300
 
 MENSAJE_FALLBACK_TFIDF = (
     "API LLM no disponible: se usa solo TF-IDF (sin detección semántica). "
@@ -130,9 +130,42 @@ def segmentar_nota(texto: str) -> list[tuple[int, str]]:
     out: list[tuple[int, str]] = []
     for parte in partes:
         oracion = parte.strip()
-        if len(oracion) >= 3:
+        if len(oracion) >= 3 and not es_rotulo_estructural(oracion):
             out.append((len(out), oracion))
     return out
+
+
+_RE_ROTULO = re.compile(
+    r"^(?:"
+    r"-{2,}.*-{2,}"
+    r"|fecha\s*:.*hora\s*:"
+    r"|notas\s+de\s+evoluci[oó]n"
+    r"|[oó]rdenes?\s+m[eé]dicas.*"
+    r"|nota\s+de\s+(?:ingreso|alta)"
+    r"|evoluci[oó]n\s+\d+"
+    r"|app|apf|aqx"
+    r"|alergias"
+    r"|dieta|h[áa]bitos"
+    r"|motivo\s+de\s+consulta"
+    r"|enfermedad\s+actual"
+    r"|examen\s+f[ií]sico"
+    r"|signos\s+vitales"
+    r"|an[áa]lisis"
+    r"|subjetivo|objetivo|plan"
+    r"|impresiones?\s+diagn[oó]sticas?"
+    r"|procedimiento\s+realizado"
+    r")\s*:?\s*"
+    r"(?:\([^)]*\))?\s*\.?$",
+    re.I,
+)
+
+
+def es_rotulo_estructural(oracion: str) -> bool:
+    """Títulos/subtítulos del formulario: no son frases clínicas a puntuar."""
+    texto = re.sub(r"\s+", " ", (oracion or "").strip())
+    if not texto:
+        return True
+    return bool(_RE_ROTULO.match(texto))
 
 
 def cargar_modelo_tfidf(path: str | Path):
@@ -160,7 +193,7 @@ def puntuar_llm(
     nota_context: str = "",
 ) -> tuple[float, str, float, str | None]:
     contexto = rag.retrieve(oracion) if mode == "rag" and rag else ""
-    prompt = get_prompt(mode, idioma, oracion, contexto)
+    prompt = get_prompt(mode, idioma, oracion, contexto, nota=nota_context)
     brazo = f"llm_{mode}"
     resp = client.complete(prompt, brazo=brazo, nota_context=nota_context)
     score = parse_yes_no(resp["text"], idioma)

@@ -25,6 +25,7 @@ def test_tc_ui_s01_modos_seguridad(mock_llm, expected_mode, monkeypatch):
     """TC-UI-S01/S02: Modos de datos según mock y API key."""
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     mode = get_data_mode(mock_llm)
     if mock_llm:
         assert mode == "local"

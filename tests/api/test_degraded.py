@@ -71,3 +71,29 @@ def test_tc_api_22_modo_degradado_api_endpoint(patch_inference_service, monkeypa
     assert data["modo_degradado"] is True
     assert data["brazos_efectivos"] == ["tfidf"]
     assert data["mensaje_fallback"] is not None
+
+
+@pytest.mark.regression
+def test_generar_rag_offline_no_revienta_500(client, monkeypatch):
+    """Si HuggingFace/embeddings fallan, /generar sigue con TF-IDF y LLM zero-shot."""
+    from api.service import InferenceService
+
+    def boom(self):
+        raise RuntimeError("Cannot send a request, as the client has been closed.")
+
+    monkeypatch.setattr(InferenceService, "get_rag_index", boom)
+    resp = client.post(
+        "/generar",
+        json={
+            "nota_clinica": NOTA_MEDICACION,
+            "mock_llm": True,
+            "brazos": ["tfidf", "llm_zero", "llm_rag"],
+            "umbral": 0.5,
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "llm_rag" not in data["brazos_efectivos"]
+    assert "tfidf" in data["brazos_efectivos"]
+    assert data["mensaje_fallback"]
+    assert data["top1"] is not None

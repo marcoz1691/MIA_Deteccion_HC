@@ -49,7 +49,7 @@ def render_results_panel(
     if resultado.truncado:
         st.warning(
             f"La nota tiene {resultado.n_total} oraciones; "
-            f"se analizaron las primeras 20 en esta demo."
+            f"se analizaron las primeras {len(resultado.oraciones)}."
         )
 
     top = resultado.top1(brazos)

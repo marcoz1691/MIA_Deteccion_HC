@@ -1,1 +1,1 @@
-Los errores de medicación incluyen prescripciones que contradicen alergias del paciente, interacciones medicamentosas no consideradas, o dosis fuera de rango terapéutico. Verificar siempre contraindicaciones en odontología (anticoagulantes, antibióticos profilácticos).
+En este MVP no se puntúan errores de medicación (dosis, duplicidad, omeprazol u otro tratamiento habitual suspendido temporalmente para un procedimiento). Solo las alergias vs prescripción siguen en alcance. No marcar “mantiene tratamiento habitual” ni “suspendido como preparación del procedimiento”.

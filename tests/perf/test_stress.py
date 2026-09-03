@@ -8,6 +8,7 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
+from s7.inferencia import MAX_ORACIONES_DEMO
 from s7.llm_client import LLMUnavailableError
 from s7.test_fallback import _client_que_falla
 from tests.fixtures.notas import NOTA_LIMPIA, NOTA_MEDICACION
@@ -15,7 +16,7 @@ from tests.fixtures.notas import NOTA_LIMPIA, NOTA_MEDICACION
 
 @pytest.mark.stress
 def test_tc_str_04_payload_grande_truncado(client):
-    """TC-STR-04: Nota 500 oraciones → 200 + truncado=true."""
+    """TC-STR-04: Nota 500 oraciones → tope + truncado=true."""
     nota = ". ".join([f"Oración {i}." for i in range(500)])
     resp = client.post(
         "/generar",
@@ -29,7 +30,7 @@ def test_tc_str_04_payload_grande_truncado(client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["truncado"] is True
-    assert len(data["oraciones"]) == 20
+    assert len(data["oraciones"]) == MAX_ORACIONES_DEMO
 
 
 @pytest.mark.stress

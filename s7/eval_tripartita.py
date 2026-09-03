@@ -51,7 +51,7 @@ def evaluar_llm(
     preds, scores, latencies = [], [], []
     for _, row in df.iterrows():
         contexto = rag.retrieve(row.oracion) if mode == "rag" and rag else ""
-        prompt = get_prompt(mode, idioma, row.oracion, contexto)
+        prompt = get_prompt(mode, idioma, row.oracion, contexto, nota=str(row.get("nota") or ""))
         resp = client.complete(prompt, brazo=f"llm_{mode}")
         score = parse_yes_no(resp["text"], idioma)
         latencies.append(resp["latency_ms"])

@@ -6,9 +6,10 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
-
 ROOT = Path(__file__).resolve().parent.parent
+
+# Siempre cargar .env del repo (uvicorn puede arrancar con otro cwd).
+load_dotenv(ROOT / ".env", override=True)
 
 
 def _env_bool(name: str) -> bool | None:
@@ -19,7 +20,22 @@ def _env_bool(name: str) -> bool | None:
 
 
 def llm_api_configurada() -> bool:
+    return bool(
+        (os.getenv("ANTHROPIC_API_KEY") or "").strip()
+        or (os.getenv("OPENAI_API_KEY") or "").strip()
+        or (os.getenv("MISTRAL_API_KEY") or "").strip()
+    )
+
+
+def vision_configurada() -> bool:
+    """Hay clave para el modelo de visión y no se forzó modo mock."""
+    if _env_bool("MOCK_LLM"):
+        return False
     return bool(os.getenv("OPENAI_API_KEY") or os.getenv("MISTRAL_API_KEY"))
+
+
+def vision_model() -> str:
+    return (os.getenv("VISION_MODEL") or "gpt-4o-mini").strip()
 
 
 def resolve_mock_llm(request_mock_llm: bool) -> tuple[bool, bool]:

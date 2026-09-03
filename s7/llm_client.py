@@ -11,9 +11,10 @@ from typing import Optional
 
 from dotenv import load_dotenv
 
-load_dotenv()
+_ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(_ROOT / ".env", override=True)
 
-MOCK_VERSION = "3"  # bump al cambiar heurística mock (invalida cache)
+MOCK_VERSION = "4"  # bump al cambiar heurística mock (invalida cache)
 
 logger = logging.getLogger(__name__)
 
@@ -62,8 +63,19 @@ class LLMClient:
             "retries": 0,
         }
 
-        api_key = os.getenv("OPENAI_API_KEY") or os.getenv("MISTRAL_API_KEY")
-        base_url = os.getenv("OPENAI_BASE_URL")
+        anthropic_key = (os.getenv("ANTHROPIC_API_KEY") or "").strip()
+        api_key = anthropic_key or (os.getenv("OPENAI_API_KEY") or os.getenv("MISTRAL_API_KEY") or "").strip()
+        env_model = (os.getenv("LLM_MODEL") or "").strip()
+        if anthropic_key:
+            base_url = (os.getenv("ANTHROPIC_BASE_URL") or "").strip() or "https://api.anthropic.com/v1/"
+            if env_model:
+                self.model = env_model
+            elif str(self.model).startswith("gpt-"):
+                self.model = "claude-haiku-4-5"
+        else:
+            base_url = (os.getenv("OPENAI_BASE_URL") or "").strip()
+            if env_model:
+                self.model = env_model
         if not mock and api_key:
             from openai import OpenAI
             kwargs = {"api_key": api_key}
@@ -78,7 +90,7 @@ class LLMClient:
                     self.mock = True
                 else:
                     raise LLMUnavailableError(
-                        "API LLM no configurada (falta OPENAI_API_KEY / MISTRAL_API_KEY). "
+                        "API LLM no configurada (falta ANTHROPIC_API_KEY / OPENAI_API_KEY / MISTRAL_API_KEY). "
                         "Usar TF-IDF o activar modo mock."
                     )
 
@@ -197,6 +209,12 @@ class LLMClient:
             d in oracion
             for d in ("amoxicilina", "ampicilina", "amoxicillin", "ampicillin")
         ):
+            return "YES"
+
+        # Sexo contradictorio: la oración usa el sexo opuesto al ya declarado en la nota
+        if "paciente masculino" in nota and "paciente femenino" in oracion:
+            return "YES"
+        if "paciente femenino" in nota and "paciente masculino" in oracion:
             return "YES"
 
         # Plan desproporcionado: gingivitis leve vs extracción total

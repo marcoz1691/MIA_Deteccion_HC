@@ -28,7 +28,13 @@ class RAGIndex:
     def _load_model(self):
         if self._model is None:
             from sentence_transformers import SentenceTransformer
-            self._model = SentenceTransformer(self.embedding_model_name)
+
+            try:
+                self._model = SentenceTransformer(
+                    self.embedding_model_name, local_files_only=True
+                )
+            except Exception:
+                self._model = SentenceTransformer(self.embedding_model_name)
 
     def _load_chunks(self) -> list[str]:
         chunks = []
@@ -69,10 +75,14 @@ class RAGIndex:
         self._load_model()
         idx_file = self.index_path / "index.faiss"
         chunks_file = self.index_path / "chunks.json"
-        if not idx_file.exists():
+        if not idx_file.exists() or not chunks_file.exists():
+            return self.build()
+        guardados = json.loads(chunks_file.read_text(encoding="utf-8"))
+        actuales = self._load_chunks()
+        if guardados != actuales:
             return self.build()
         self._index = faiss.read_index(str(idx_file))
-        self._chunks = json.loads(chunks_file.read_text(encoding="utf-8"))
+        self._chunks = guardados
         return self
 
     def retrieve(self, query: str) -> str:

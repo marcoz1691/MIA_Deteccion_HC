@@ -5,7 +5,7 @@ import json
 import sys
 import urllib.error
 import urllib.request
-from dataclasses import dataclass, field
+from s7.inferencia import MAX_ORACIONES_DEMO
 
 BASE = "http://127.0.0.1:8000"
 
@@ -75,7 +75,7 @@ def check(cond: bool, msg: str):
 
 def build_cases() -> list[Case]:
     nota_larga = ". ".join(
-        [f"Oracion numero {i} sin inconsistencia aparente" for i in range(1, 23)]
+        [f"Oracion numero {i} sin inconsistencia aparente" for i in range(1, MAX_ORACIONES_DEMO + 6)]
     ) + "."
 
     return [
@@ -269,7 +269,7 @@ def build_cases() -> list[Case]:
         ),
         Case(
             "TC-16",
-            "Nota larga (>20 oraciones) — truncado",
+            "Nota larga — truncado al tope de oraciones",
             "POST",
             "/generar",
             body={
@@ -281,8 +281,8 @@ def build_cases() -> list[Case]:
             checks=[
                 lambda s, p: check(s == 200, f"status={s}"),
                 lambda s, p: check(p["truncado"] is True, f"truncado={p.get('truncado')}"),
-                lambda s, p: check(p["n_total"] > 20, f"n_total={p.get('n_total')}"),
-                lambda s, p: check(len(p["oraciones"]) == 20, f"oraciones={len(p.get('oraciones', []))}"),
+                lambda s, p: check(p["n_total"] > MAX_ORACIONES_DEMO, f"n_total={p.get('n_total')}"),
+                lambda s, p: check(len(p["oraciones"]) == MAX_ORACIONES_DEMO, f"oraciones={len(p.get('oraciones', []))}"),
             ],
         ),
         Case(

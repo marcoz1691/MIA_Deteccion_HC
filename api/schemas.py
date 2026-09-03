@@ -49,6 +49,13 @@ class Top1Response(BaseModel):
     alerta: bool
 
 
+class ValidacionResponse(BaseModel):
+    tipo: str
+    mensaje: str
+    sid: int | None = None
+    oracion: str | None = None
+
+
 class GenerarResponse(BaseModel):
     oraciones: list[OracionResponse]
     top1: Top1Response | None
@@ -58,6 +65,7 @@ class GenerarResponse(BaseModel):
     brazos_efectivos: list[str]
     mensaje_fallback: str | None
     historial_id: str | None = None
+    validaciones: list[ValidacionResponse] = Field(default_factory=list)
 
 
 class HistorialItemResponse(BaseModel):
@@ -89,3 +97,48 @@ class HealthResponse(BaseModel):
     )
     historial_sqlite: str = Field(description="Ruta absoluta de la base SQLite del historial.")
     historial_count: int = Field(description="Número de análisis almacenados.")
+
+
+class MuestraPdfItem(BaseModel):
+    id: str
+    nombre: str
+    carpeta: str
+    n_paginas: int
+
+
+class MuestrasPdfResponse(BaseModel):
+    muestras: list[MuestraPdfItem]
+
+
+class ExtraerPdfRequest(BaseModel):
+    muestra_id: str = Field(..., min_length=1, description="Ruta relativa bajo salidas o salidas_buscable.")
+
+
+class ExtraerPdfResponse(BaseModel):
+    texto: str
+    n_paginas: int
+    n_oraciones_utiles: int
+    n_omitidas_ruido: int
+    n_omitidas_identificadores: int
+    n_truncadas: int = 0
+    origen: str
+
+
+class EvolucionEntry(BaseModel):
+    evolucion_n: int
+    fecha: str | None = None
+    hora: str | None = None
+    notas_evolucion: str
+    ordenes_medicas: list[str] = Field(default_factory=list)
+
+
+class ExtraerPdfEstructuradoResponse(BaseModel):
+    origen: str
+    n_paginas: int
+    motor: Literal["vision", "ocr", "capa_texto"]
+    entries: list[EvolucionEntry]
+    paginas_sin_contenido: list[int] = Field(default_factory=list)
+    texto_plano: str = Field(
+        description="Bloques '--- EVOLUCIÓN n ---' listos para el textarea y el detector."
+    )
+    aviso: str | None = None

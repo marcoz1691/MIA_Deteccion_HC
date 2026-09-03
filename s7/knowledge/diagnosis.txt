@@ -1,1 +1,3 @@
-Diagnosis inconsistencies include contradictory diagnoses in the same note, symptoms that do not support the stated diagnosis, or staging/severity that conflicts with documented findings. Cross-reference chief complaint, assessment, and plan sections.
+Diagnosis inconsistencies include contradictory diagnoses in the same note (two incompatible primary diagnoses), not the reason for visit. Do not flag “acude para valoración”, endoscopic control, follow-up of a known gastric pathology, or a scheduled procedure as an inconsistency.
+
+A documented sex/gender contradiction is an inconsistency: if the note states PACIENTE MASCULINO (or male patient) and later PACIENTE FEMENINO (or female patient), or the reverse, flag the sentence that changes the sex. Vasectomy in a patient later described as female is the same class of error.

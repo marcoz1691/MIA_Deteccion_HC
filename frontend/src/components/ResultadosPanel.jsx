@@ -18,16 +18,16 @@ function ScoreBar({ value, umbral = 0.5 }) {
 function EmptyState() {
   return (
     <div className="empty-state">
-      <p>El sistema localiza la frase sospechosa. No es un veredicto médico.</p>
+      <p>El hallazgo aparece aquí. No es un veredicto médico.</p>
       <ol className="empty-steps">
         <li>
-          <b>01</b> Elige un ejemplo o pega una nota médica.
+          <b>01</b> Elija un caso o pegue la historia clínica.
         </li>
         <li>
-          <b>02</b> Pulsa Analizar nota para ejecutar TF-IDF, LLM y RAG.
+          <b>02</b> Pulse Analizar historia clínica.
         </li>
         <li>
-          <b>03</b> Revisa la frase marcada. Un médico debe validar el hallazgo.
+          <b>03</b> Valide la frase marcada con criterio clínico.
         </li>
       </ol>
     </div>
@@ -64,8 +64,8 @@ export default function ResultadosPanel({ resultado, error, loading, mockLlm = t
     >
       <div className="card-head">
         <p className="eyebrow">Hallazgo</p>
-        <h2 id="result-title">Revisión asistida</h2>
-        <p className="hint">Se señala la frase a revisar. La decisión sigue siendo médica.</p>
+        <h2 id="result-title">Frase a validar</h2>
+        <p className="hint">Una frase. Un score. La decisión sigue siendo médica.</p>
       </div>
 
       {loading && (
@@ -73,7 +73,7 @@ export default function ResultadosPanel({ resultado, error, loading, mockLlm = t
           <div className="spinner" aria-hidden="true" />
           <div>
             <p className="loading-title">
-              Analizando nota…{elapsed > 0 ? ` (${elapsed}s)` : ""}
+              Analizando historia clínica…{elapsed > 0 ? ` (${elapsed}s)` : ""}
             </p>
             <p className="hint">{loadingHint}</p>
           </div>
@@ -105,7 +105,7 @@ function ResultadoBody({ resultado }) {
           La nota tiene {n_total} frases; se analizaron las primeras {oraciones.length}.
         </div>
       )}
-      {modo_degradado && (
+      {(modo_degradado || mensaje_fallback) && (
         <div className="banner warn">{mensaje_fallback || "Modo degradado: solo TF-IDF."}</div>
       )}
 
@@ -131,7 +131,7 @@ function ResultadoBody({ resultado }) {
           <header>
             <span>Frase {top1.sid + 1}</span>
             <span className={`pill ${alerta ? "danger" : "ok"}`}>
-              {alerta ? "Sospechosa" : "Bajo umbral"}
+              {alerta ? "Probable inconsistencia" : "Sin inconsistencia aparente"}
             </span>
           </header>
           <p>{top1.oracion}</p>

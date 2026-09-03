@@ -65,3 +65,34 @@ export async function clearHistorialApi() {
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();
 }
+
+export async function listarMuestrasPdf() {
+  const res = await fetch(`${API_BASE}/muestras-pdf`);
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+async function postPdf(path, { file, muestraId }) {
+  let res;
+  if (file) {
+    const form = new FormData();
+    form.append("archivo", file);
+    res = await fetch(`${API_BASE}${path}`, { method: "POST", body: form });
+  } else {
+    res = await fetch(`${API_BASE}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ muestra_id: muestraId }),
+    });
+  }
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+export async function extraerPdf({ file, muestraId }) {
+  return postPdf("/extraer-pdf", { file, muestraId });
+}
+
+export async function extraerPdfEstructurado({ file, muestraId }) {
+  return postPdf("/extraer-pdf-estructurado", { file, muestraId });
+}
