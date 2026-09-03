@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const notaSource = readFileSync(new URL("./components/NotaInput.jsx", import.meta.url), "utf8");
+const historialPanelSource = readFileSync(
+  new URL("./components/HistorialPanel.jsx", import.meta.url),
+  "utf8",
+);
 const resultadosSource = readFileSync(
   new URL("./components/ResultadosPanel.jsx", import.meta.url),
   "utf8",
@@ -20,9 +24,14 @@ test("alert results use the banner alert hierarchy", () => {
   assert.match(stylesSource, /\.banner\.alert[^}]*\{[^}]*border-left:/);
 });
 
+test("analyze action stays reachable without scrolling past the note", () => {
+  assert.match(notaSource, /intake-sticky/);
+  assert.match(stylesSource, /\.intake-sticky\s*\{[^}]*position:\s*sticky;/);
+});
+
 test("empty guidance follows the 01 through 03 demo path", () => {
-  assert.match(resultadosSource, /<b>01<\/b>[\s\S]*Elige/);
-  assert.match(resultadosSource, /<b>02<\/b>[\s\S]*Analizar nota/);
+  assert.match(resultadosSource, /<b>01<\/b>[\s\S]*historia clínica/);
+  assert.match(resultadosSource, /<b>02<\/b>[\s\S]*Analizar historia clínica/);
   assert.match(resultadosSource, /<b>03<\/b>[\s\S]*validar/i);
 });
 
@@ -33,12 +42,15 @@ test("active chips use a soft primary treatment", () => {
   );
 });
 
-test("tablet and mobile layouts expose a collapsed historial toggle", () => {
-  assert.match(appSource, /aria-controls="historial-rail"/);
-  assert.match(appSource, /aria-expanded=\{historialRailOpen\}/);
+test("historial rail can collapse and expand on all layouts", () => {
+  assert.match(historialPanelSource, /aria-controls="historial-rail"/);
+  assert.match(historialPanelSource, /aria-expanded=\{open\}/);
+  assert.match(historialPanelSource, /historial-icon-btn/);
+  assert.match(historialPanelSource, /Nueva revisión/);
+  assert.match(historialPanelSource, /Buscar chats/);
   assert.match(
     stylesSource,
-    /@media \(max-width: 1023px\)[\s\S]*\.historial-rail:not\(\.is-open\)\s*\{[^}]*display:\s*none;/,
+    /\.historial-slot:not\(\.is-open\)\s+\.historial-rail\s*\{[^}]*display:\s*none;/,
   );
 });
 

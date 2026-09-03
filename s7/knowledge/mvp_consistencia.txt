@@ -1,0 +1,15 @@
+Inconsistencias de alto nivel (MVP) en una misma historia clínica.
+
+Lateralidad: marcar si la oración cambia izquierdo/derecho respecto a un hallazgo, procedimiento o vía ya documentados (p. ej. molar 36 vs 46, miembro superior derecho vs izquierdo).
+
+Sexo o género: marcar si la oración declara PACIENTE FEMENINO cuando la nota ya dijo PACIENTE MASCULINO, o al revés. Vasectomía, embarazo o ginecología que contradigan el sexo declarado son el mismo tipo de error.
+
+Alergias: marcar si se prescribe un fármaco de la misma clase que una alergia documentada (p. ej. alergia a penicilina y amoxicilina).
+
+Medicamentos: marcar dosis, frecuencia o fármaco que contradigan lo ya escrito (suspendido vs administrado, duplicidad, omeprazol suspendido para el procedimiento vs orden de darlo).
+
+Edad: marcar procedimientos o hallazgos incompatibles con la edad documentada (p. ej. 39 años vs «paciente geriátrico», o edad distinta en dos evoluciones).
+
+Fuera de alcance MVP: no marcar tolerancia oral o dieta frente a «en condiciones de alta», ni signos vitales, hemodinamia, náuseas, dolor o indicaciones de egreso. Eso no es lateralidad, sexo, alergia, medicamento ni edad.
+
+El detalle fino (fármaco que agrava una condición por mecanismo) corresponde a un modelo médico posterior, no a este MVP.

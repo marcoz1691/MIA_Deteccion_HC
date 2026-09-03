@@ -8,7 +8,13 @@ from s7.llm_client import LLMClient, LLMUnavailableError
 from s7.rag_index import RAGIndex
 
 from api.db import HistorialDB
-from api.schemas import GenerarRequest, GenerarResponse, HistorialItemResponse, OracionResponse, Top1Response
+from api.schemas import (
+    GenerarRequest,
+    GenerarResponse,
+    HistorialItemResponse,
+    OracionResponse,
+    Top1Response,
+)
 from api.settings import resolve_mock_llm
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -99,10 +105,19 @@ class InferenceService:
 
         client = None
         rag = None
+        rag_aviso: str | None = None
         if any(b.startswith("llm_") for b in brazos):
             client = self._build_llm_client(mock_llm=mock_llm)
             if "llm_rag" in brazos:
-                rag = self.get_rag_index()
+                try:
+                    rag = self.get_rag_index()
+                except Exception:
+                    brazos = [b for b in brazos if b != "llm_rag"]
+                    rag = None
+                    rag_aviso = (
+                        "Índice RAG no disponible (embeddings/HuggingFace). "
+                        "Se continúa con TF-IDF y LLM zero-shot."
+                    )
 
         resultado = analizar_nota(
             request.nota_clinica.strip(),
@@ -115,6 +130,13 @@ class InferenceService:
             rag=rag,
             fallback_tfidf=self.modelo_tfidf_disponible,
         )
+        if rag_aviso:
+            resultado.modo_degradado = True
+            previo = resultado.mensaje_fallback
+            resultado.mensaje_fallback = f"{previo} {rag_aviso}".strip() if previo else rag_aviso
+            resultado.brazos_efectivos = [
+                b for b in (resultado.brazos_efectivos or brazos) if b != "llm_rag"
+            ]
         response = serialize_resultado(resultado, request.umbral)
 
         if request.guardar_historial and self.historial_db is not None:

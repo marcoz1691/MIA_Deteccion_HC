@@ -49,12 +49,12 @@ export default function HeaderBrand({
           </button>
           <div>
             <p className="brand-kicker">MIA · CITIMED</p>
-            <h1>Detección de inconsistencias</h1>
+            <h1>Consistencia de historias clínicas</h1>
           </div>
         </div>
         <div className="topbar-meta">
           <p className="lede disclaimer-inline">
-            Prototipo de investigación. No sustituye el criterio médico.
+            Localiza la frase que no cuadra. El criterio sigue siendo médico.
           </p>
           {isDev && (
             <div className={`status ${backendOk ? "ok" : "down"}`}>

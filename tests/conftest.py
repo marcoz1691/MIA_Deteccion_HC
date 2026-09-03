@@ -32,11 +32,12 @@ def patch_inference_service(monkeypatch, fake_modelo_tfidf):
     from s7.inferencia import cargar_config
     from api.service import InferenceService, resolve_cfg_paths
 
-    def _init(self) -> None:
+    def _init(self, historial_db=None) -> None:
         self.cfg = resolve_cfg_paths(cargar_config(ROOT / "s7" / "config.yaml"))
         self.model_path = ROOT / "tests" / "fixtures" / "modelo_test.joblib"
         self.modelo_tfidf = fake_modelo_tfidf
         self._rag = None
+        self.historial_db = historial_db
 
     monkeypatch.setattr(InferenceService, "__init__", _init)
     return fake_modelo_tfidf
@@ -48,11 +49,12 @@ def patch_inference_no_model(monkeypatch):
     from s7.inferencia import cargar_config
     from api.service import InferenceService, resolve_cfg_paths
 
-    def _init(self) -> None:
+    def _init(self, historial_db=None) -> None:
         self.cfg = resolve_cfg_paths(cargar_config(ROOT / "s7" / "config.yaml"))
         self.model_path = ROOT / "tests" / "fixtures" / "missing.joblib"
         self.modelo_tfidf = None
         self._rag = None
+        self.historial_db = historial_db
 
     monkeypatch.setattr(InferenceService, "__init__", _init)
 
@@ -63,6 +65,7 @@ def client(patch_inference_service, monkeypatch):
     monkeypatch.setenv("MOCK_LLM", "true")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
     import api.main as main_module
 
@@ -79,6 +82,7 @@ def client_no_model(patch_inference_no_model, monkeypatch):
     monkeypatch.setenv("MOCK_LLM", "true")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
     import api.main as main_module
 

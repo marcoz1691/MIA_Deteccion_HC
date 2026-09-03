@@ -134,6 +134,14 @@ STOP_NER = {
     "acude", "refiere", "niega", "presenta", "ingresa", "egresa", "evoluciona", "recibe", "indica",
 }
 
+# Tras "Paciente …" el OCR/mayúsculas clínicas no son un nombre propio.
+STOP_NOMBRE_CONTEXTO = STOP_NER | {
+    "masculino", "femenino", "hombre", "mujer", "nino", "nina", "adulto", "adulta",
+    "consciente", "orientado", "orientada", "hemodinamicamente", "estable",
+    "asintomatico", "asintomatica", "antecedente", "antecedentes", "alergia",
+    "quien", "con", "sin", "para", "por", "de", "del", "en", "al", "que",
+}
+
 
 # --------------------------------------------------------------------------- NER
 
@@ -206,10 +214,13 @@ def detectar(texto: str, usar_ner: bool = True, modelo_spacy: str = "es_core_new
                 if fechas == "todas" or CONTEXTO_NACIMIENTO.search(texto[max(0, s - 40):s]):
                     hallazgos.append(Hallazgo(s, e, "FECHA", texto[s:e], "regex", 0.9))
 
-    # Nombres por contexto
+    # Nombres por contexto ("Paciente: Juan Pérez"). No marcar filiación clínica.
     for m in CONTEXTO_NOMBRE.finditer(texto):
         s, e = m.span(1)
-        hallazgos.append(Hallazgo(s, e, "NOMBRE", texto[s:e], "contexto", 0.9))
+        captura = texto[s:e].strip()
+        if not _captura_es_nombre_persona(captura):
+            continue
+        hallazgos.append(Hallazgo(s, e, "NOMBRE", captura, "contexto", 0.9))
 
     for m in CONTEXTO_DIRECCION.finditer(texto):
         s, e = m.span(1)
@@ -223,6 +234,17 @@ def detectar(texto: str, usar_ner: bool = True, modelo_spacy: str = "es_core_new
         hallazgos.extend(_ner(texto, modelo_spacy))
 
     return fusionar_hallazgos(hallazgos)
+
+
+def _captura_es_nombre_persona(texto: str) -> bool:
+    tokens = [sin_tildes(w.lower()) for w in re.findall(r"[A-Za-zÁÉÍÓÚÑáéíóúñ]+", texto)]
+    if not tokens:
+        return False
+    if tokens[0] in STOP_NOMBRE_CONTEXTO:
+        return False
+    if all(tok in STOP_NOMBRE_CONTEXTO for tok in tokens):
+        return False
+    return True
 
 
 def fusionar_hallazgos(h: list[Hallazgo]) -> list[Hallazgo]:

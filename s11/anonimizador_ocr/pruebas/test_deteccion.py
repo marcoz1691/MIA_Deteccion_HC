@@ -42,6 +42,24 @@ def test_nombre_contexto_no_cruza_linea():
     assert ("NOMBRE", "Rosa Elena Quishpe") in e
 
 
+def test_paciente_masculino_no_es_nombre():
+    texto = (
+        "PACIENTE MASCULINO CON ANTECEDENTE DE METAPLASIA GÁSTRICA. "
+        "PACIENTE ACUDE PARA PROCEDIMIENTO PROGRAMADO. "
+        "PACIENTE CONSCIENTE ORIENTADO EN TIEMPO Y ESPACIO."
+    )
+    assert not any(et == "NOMBRE" for et, _ in etiquetas(texto))
+
+
+def test_apf_familiar_no_es_nombre():
+    texto = (
+        "APF:(ANTECEDENTES PATOLÓGICOS FAMILIARES):\n"
+        "ABUELO MATERNO: CÁNCER PRÓSTATA\n"
+        "ABUELA MATERNA: CANCER ESTOMAGO"
+    )
+    assert not any(et == "NOMBRE" for et, _ in etiquetas(texto))
+
+
 if __name__ == "__main__":
     for n, f in list(globals().items()):
         if n.startswith("test_"):
