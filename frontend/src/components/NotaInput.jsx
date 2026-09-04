@@ -29,6 +29,7 @@ export default function NotaInput({
 }) {
   const chars = nota.trim().length;
   const casoActivo = EJEMPLOS.find((ej) => ej.id === ejemploId);
+  const pdfSoloLectura = Boolean(pdfCargado?.soloLectura);
   const pdfActivo = pdfExtrayendo || Boolean(pdfCargado) || ejemploId === "pdf";
 
   return (
@@ -70,35 +71,42 @@ export default function NotaInput({
               <strong>ORDENES MEDICAS GENERALES</strong>.
             </p>
             <div className="pdf-fuente">
-              <label className="chip pdf-file-chip">
-                <input
-                  type="file"
-                  accept="application/pdf,.pdf"
-                  disabled={loading || pdfExtrayendo || !onPdfFile}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    e.target.value = "";
-                    if (file && onPdfFile) onPdfFile(file);
-                  }}
-                />
-                {pdfExtrayendo ? "Extrayendo…" : pdfCargado ? "Cambiar PDF" : "Cargar PDF"}
-              </label>
+              {!pdfSoloLectura && (
+                <label className="chip pdf-file-chip">
+                  <input
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    disabled={loading || pdfExtrayendo || !onPdfFile}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = "";
+                      if (file && onPdfFile) onPdfFile(file);
+                    }}
+                  />
+                  {pdfExtrayendo ? "Extrayendo…" : pdfCargado ? "Cambiar PDF" : "Cargar PDF"}
+                </label>
+              )}
               {pdfCargado && (
-                <span className="pdf-loaded" title={pdfCargado.nombre}>
+                <span
+                  className={`pdf-loaded${pdfSoloLectura ? " pdf-loaded-readonly" : ""}`}
+                  title={pdfCargado.nombre}
+                >
                   <span className="pdf-loaded-name">{pdfCargado.nombre}</span>
-                  <button
-                    type="button"
-                    className="pdf-loaded-clear"
-                    aria-label={`Quitar ${pdfCargado.nombre}`}
-                    onClick={onPdfQuitar}
-                    disabled={loading || pdfExtrayendo}
-                  >
-                    ×
-                  </button>
+                  {!pdfSoloLectura && (
+                    <button
+                      type="button"
+                      className="pdf-loaded-clear"
+                      aria-label={`Quitar ${pdfCargado.nombre}`}
+                      onClick={onPdfQuitar}
+                      disabled={loading || pdfExtrayendo}
+                    >
+                      ×
+                    </button>
+                  )}
                 </span>
               )}
             </div>
-            {!pdfCargado && muestrasPdf.length > 0 && (
+            {!pdfCargado && !pdfSoloLectura && muestrasPdf.length > 0 && (
               <details className="pdf-muestras">
                 <summary>Muestras anonimizadas de demostración</summary>
                 <div className="chips" role="group" aria-label="Muestras anonimizadas locales">
@@ -238,7 +246,7 @@ export default function NotaInput({
           {loading ? "Analizando historia clínica…" : "Analizar historia clínica"}
         </button>
         {showBackendHint && !backendOk && (
-          <p className="hint warn-text">Arranca FastAPI en el puerto 8000 para habilitar el análisis.</p>
+          <p className="hint warn-text">Arranca FastAPI en el puerto 8010 para habilitar el análisis.</p>
         )}
       </div>
     </section>

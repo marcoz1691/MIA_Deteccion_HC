@@ -142,6 +142,8 @@ class InferenceService:
         if request.guardar_historial and self.historial_db is not None:
             nota = request.nota_clinica.strip()
             alerta = bool(response.top1 and response.top1.alerta)
+            pdf_origen = request.pdf_origen if request.ejemplo_id == "pdf" else None
+            pdf_muestra_id = request.pdf_muestra_id if request.ejemplo_id == "pdf" else None
             saved = self.historial_db.save_analisis(
                 nota=nota,
                 resultado=response.model_dump(mode="json"),
@@ -149,6 +151,8 @@ class InferenceService:
                 idioma=request.idioma,
                 mock_llm=mock_llm,
                 alerta=alerta,
+                pdf_origen=pdf_origen,
+                pdf_muestra_id=pdf_muestra_id,
             )
             response = response.model_copy(update={"historial_id": saved["id"]})
 
@@ -229,4 +233,6 @@ def _historial_item_from_row(row: dict) -> HistorialItemResponse:
         idioma=row["idioma"],
         mock_llm=row["mock_llm"],
         alerta=row["alerta"],
+        pdf_origen=row.get("pdf_origen"),
+        pdf_muestra_id=row.get("pdf_muestra_id"),
     )

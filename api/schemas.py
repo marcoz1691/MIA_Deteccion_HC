@@ -25,6 +25,8 @@ class GenerarRequest(BaseModel):
     )
     umbral: float = Field(0.5, ge=0.0, le=1.0, description="Umbral de alerta para localización.")
     ejemplo_id: str = Field("propia", description="Identificador del caso demo o 'propia'.")
+    pdf_origen: str | None = Field(None, description="Nombre del PDF cargado (historial).")
+    pdf_muestra_id: str | None = Field(None, description="ID de muestra PDF del servidor (historial).")
     guardar_historial: bool = Field(True, description="Persistir el análisis en SQLite.")
 
 
@@ -77,6 +79,8 @@ class HistorialItemResponse(BaseModel):
     idioma: IdiomaLiteral
     mock_llm: bool
     alerta: bool
+    pdf_origen: str | None = None
+    pdf_muestra_id: str | None = None
 
 
 class HistorialListResponse(BaseModel):

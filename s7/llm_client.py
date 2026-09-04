@@ -5,6 +5,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import time
 from pathlib import Path
 from typing import Optional
@@ -17,6 +18,22 @@ load_dotenv(_ROOT / ".env", override=True)
 MOCK_VERSION = "4"  # bump al cambiar heurística mock (invalida cache)
 
 logger = logging.getLogger(__name__)
+
+_RE_TRY_AGAIN = re.compile(r"try again in ([\d.]+)\s*(ms|s)", re.I)
+
+
+def delay_for_api_error(exc: BaseException, attempt: int, base: float) -> float:
+    """Espera ante un error de API: backoff exponencial, y el 'try again in' de un 429."""
+    delay = float(base) * (2 ** attempt)
+    detalle = str(exc).lower()
+    if "429" not in detalle and "rate_limit" not in detalle and "rate limit" not in detalle:
+        return delay
+    match = _RE_TRY_AGAIN.search(detalle)
+    if match:
+        value = float(match.group(1))
+        suggested = value / 1000.0 if match.group(2) == "ms" else value
+        return max(delay, suggested + 0.25)
+    return max(delay, 2.0 * (attempt + 1))
 
 
 class LLMUnavailableError(RuntimeError):
@@ -127,7 +144,7 @@ class LLMClient:
                 if attempt + 1 >= self.max_retries:
                     break
                 self.stats["retries"] += 1
-                delay = self.retry_base_delay_s * (2 ** attempt)
+                delay = delay_for_api_error(exc, attempt, self.retry_base_delay_s)
                 logger.warning(
                     "LLM API error (intento %s/%s): %s; reintento en %.1fs",
                     attempt + 1,

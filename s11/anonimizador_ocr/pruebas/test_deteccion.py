@@ -60,6 +60,18 @@ def test_apf_familiar_no_es_nombre():
     assert not any(et == "NOMBRE" for et, _ in etiquetas(texto))
 
 
+def test_nombre_no_se_traga_el_resto_clinico():
+    e = etiquetas("PACIENTE: ROSA ELENA QUISHPE REFIERE DOLOR EN PIE IZQUIERDO")
+    nombres = {txt for et, txt in e if et == "NOMBRE"}
+    assert "ROSA ELENA QUISHPE" in nombres
+    assert not any("REFIERE" in n or "DOLOR" in n for n in nombres)
+
+
+def test_nombre_tras_doctor_se_detecta():
+    e = etiquetas("CONTROL POR CONSULTA EXTERNA DR. JUAN PEREZ")
+    assert ("NOMBRE", "JUAN PEREZ") in e
+
+
 if __name__ == "__main__":
     for n, f in list(globals().items()):
         if n.startswith("test_"):

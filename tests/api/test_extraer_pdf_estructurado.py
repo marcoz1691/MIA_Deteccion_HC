@@ -240,6 +240,66 @@ def test_no_omite_bloques_clinicos_de_ingreso():
     assert "CONDICIONES DE ALTA" in plano
 
 
+def test_nota_cortada_en_preposicion_marca_corte_y_avisa():
+    """Columna izquierda que muere en el pie ('MOLESTIAS AL') no se da por completa."""
+    crudo = {
+        "entries": [
+            {
+                "evolucion_n": 1,
+                "fecha": "2026-08-24",
+                "hora": "23:30",
+                "notas_evolucion": (
+                    "IMPRESIONES DIAGNÓSTICAS:\n"
+                    "MATERIAL DE OSTEOSINTESIS EN PIE IZQUIERDO\n"
+                    "SUBJETIVO:\n"
+                    "PACIENTE NO REFIERE DOLOR NI MOLESTIAS AL"
+                ),
+                "ordenes_medicas": [
+                    "ALTA MEDICA",
+                    "RETIRO DE VÍA PERIFÉRICA",
+                    "CERTIFICADO MÉDICO DE REPOSO 8 DÍAS",
+                ],
+            }
+        ],
+        "paginas_sin_contenido": [],
+    }
+    res = pdf_estructura.extraer_estructurado(
+        _pdf_escaneado(n=3),
+        origen="hc_citimed.pdf",
+        transcriptor=lambda imgs: crudo,
+        tiene_identificador=lambda t: False,
+    )
+    notas = res["entries"][0]["notas_evolucion"]
+    assert notas.rstrip().endswith("[corte]")
+    assert "MOLESTIAS AL" in notas
+    assert res["aviso"]
+    assert "media frase" in res["aviso"].lower() or "hoja siguiente" in res["aviso"].lower()
+    assert "ALTA MEDICA" in res["texto_plano"]
+
+
+def test_nota_completa_no_marca_corte_ni_aviso_de_salto():
+    crudo = {
+        "entries": [
+            {
+                "evolucion_n": 1,
+                "notas_evolucion": (
+                    "ANÁLISIS:\n"
+                    "PACIENTE EN CONDICIONES DE ALTA TRAS VALORACIÓN MÉDICA."
+                ),
+                "ordenes_medicas": ["ALTA MEDICA"],
+            }
+        ]
+    }
+    res = pdf_estructura.extraer_estructurado(
+        _pdf_escaneado(n=3),
+        origen="hc.pdf",
+        transcriptor=lambda imgs: crudo,
+        tiene_identificador=lambda t: False,
+    )
+    assert not res["entries"][0]["notas_evolucion"].endswith("[corte]")
+    assert res["aviso"] is None or "media frase" not in res["aviso"].lower()
+
+
 def test_cedula_se_redacta_sin_borrar_el_resto_de_la_nota():
     crudo = {
         "entries": [
@@ -264,3 +324,35 @@ def test_cedula_se_redacta_sin_borrar_el_resto_de_la_nota():
     assert "[dato omitido]" in notas
     assert "METAPLASIA GÁSTRICA" in notas
     assert "ENFERMEDAD ACTUAL:" in notas
+
+
+def test_nombres_y_apellidos_nunca_quedan_en_claro():
+    crudo = {
+        "entries": [
+            {
+                "evolucion_n": 1,
+                "notas_evolucion": (
+                    "PACIENTE: ROSA ELENA QUISHPE REFIERE DOLOR EN PIE IZQUIERDO.\n"
+                    "PACIENTE MASCULINO CON METAPLASIA GÁSTRICA."
+                ),
+                "ordenes_medicas": [
+                    "CONTROL POR CONSULTA EXTERNA DR. JUAN PEREZ",
+                    "ALTA MEDICA",
+                ],
+            }
+        ]
+    }
+    res = pdf_estructura.extraer_estructurado(
+        _pdf_escaneado(),
+        origen="hc.pdf",
+        transcriptor=lambda imgs: crudo,
+        tiene_identificador=lambda t: False,
+    )
+    plano = res["texto_plano"]
+    assert "ROSA ELENA QUISHPE" not in plano
+    assert "JUAN PEREZ" not in plano
+    assert "[dato omitido]" in plano
+    assert "REFIERE DOLOR EN PIE IZQUIERDO" in plano
+    assert "METAPLASIA GÁSTRICA" in plano
+    assert "ALTA MEDICA" in plano
+    assert "CONTROL POR CONSULTA EXTERNA DR." in plano

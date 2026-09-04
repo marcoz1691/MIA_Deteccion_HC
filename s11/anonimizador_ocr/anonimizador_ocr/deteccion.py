@@ -217,10 +217,12 @@ def detectar(texto: str, usar_ner: bool = True, modelo_spacy: str = "es_core_new
     # Nombres por contexto ("Paciente: Juan Pérez"). No marcar filiación clínica.
     for m in CONTEXTO_NOMBRE.finditer(texto):
         s, e = m.span(1)
-        captura = texto[s:e].strip()
-        if not _captura_es_nombre_persona(captura):
+        crudo = texto[s:e]
+        captura = _recortar_captura_nombre(crudo.strip())
+        if not captura or not _captura_es_nombre_persona(captura):
             continue
-        hallazgos.append(Hallazgo(s, e, "NOMBRE", captura, "contexto", 0.9))
+        ini = s + crudo.find(captura)
+        hallazgos.append(Hallazgo(ini, ini + len(captura), "NOMBRE", captura, "contexto", 0.9))
 
     for m in CONTEXTO_DIRECCION.finditer(texto):
         s, e = m.span(1)
@@ -245,6 +247,17 @@ def _captura_es_nombre_persona(texto: str) -> bool:
     if all(tok in STOP_NOMBRE_CONTEXTO for tok in tokens):
         return False
     return True
+
+
+def _recortar_captura_nombre(texto: str) -> str:
+    """Corta el nombre al primer verbo/rótulo clínico (REFIERE, ACUDE, CON, …)."""
+    keep: list[str] = []
+    for w in texto.split():
+        tok = sin_tildes(re.sub(r"[^A-Za-zÁÉÍÓÚÑáéíóúñ]", "", w).lower())
+        if tok and tok in STOP_NOMBRE_CONTEXTO:
+            break
+        keep.append(w)
+    return " ".join(keep).strip(" .,-;:")
 
 
 def fusionar_hallazgos(h: list[Hallazgo]) -> list[Hallazgo]:

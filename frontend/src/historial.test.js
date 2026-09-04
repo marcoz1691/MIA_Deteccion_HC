@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { groupHistorialByDate, previewNota } from "./historial.js";
+import { groupHistorialByDate, mapHistorialItem, previewNota } from "./historial.js";
 
 test("historial preview skips evolution structural headers", () => {
   const raw =
@@ -26,4 +26,21 @@ test("historial groups chats like LibreChat by day", () => {
     ["Hoy", "Ayer", "Anteriores"],
   );
   assert.equal(groups[0].items[0].id, "1");
+});
+
+test("mapHistorialItem incluye metadatos PDF", () => {
+  const item = mapHistorialItem({
+    id: "abc",
+    created_at: "2026-01-01T00:00:00Z",
+    nota: "texto",
+    resultado: {},
+    ejemplo_id: "pdf",
+    idioma: "spanish",
+    mock_llm: false,
+    alerta: true,
+    pdf_origen: "hc0001_anon.pdf",
+    pdf_muestra_id: "salidas_buscable/hc0001_anon.pdf",
+  });
+  assert.equal(item.pdfOrigen, "hc0001_anon.pdf");
+  assert.equal(item.pdfMuestraId, "salidas_buscable/hc0001_anon.pdf");
 });

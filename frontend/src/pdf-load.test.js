@@ -56,3 +56,11 @@ test("pdf extraction highlights the document origin and keeps evolutions collaps
   assert.match(notaSource, /<summary>\{pdfResumen\}<\/summary>/);
   assert.match(appSource, /setEjemploId\("pdf"\)/);
 });
+
+test("backend-down hint matches the Vite proxy port, not the occupied 8000", () => {
+  const viteConfig = readFileSync(new URL("../vite.config.js", import.meta.url), "utf8");
+  const port = viteConfig.match(/127\.0\.0\.1:(\d+)/)?.[1];
+  assert.ok(port, "vite.config.js must declare an API proxy port");
+  assert.match(notaSource, new RegExp(`puerto ${port}`));
+  assert.doesNotMatch(notaSource, /puerto 8000/);
+});

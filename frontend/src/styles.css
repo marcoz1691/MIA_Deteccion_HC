@@ -154,17 +154,28 @@ h2 {
 }
 
 .mark {
-  width: 28px;
-  height: 28px;
+  --mark-size: 46px;
+  width: var(--mark-size);
+  height: var(--mark-size);
   flex: 0 0 auto;
-  border: 1px solid var(--accent);
-  transform: rotate(45deg);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--color-primary) 18%, transparent),
-    transparent 62%
-  );
-  box-shadow: 0 0 24px color-mix(in srgb, var(--color-primary) 18%, transparent);
+  display: block;
+  overflow: hidden;
+  clip-path: polygon(50% 3%, 97% 50%, 50% 97%, 3% 50%);
+  border: 1px solid color-mix(in srgb, #c41e3a 35%, var(--line-strong));
+  background: #fff;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #fff 80%, transparent),
+    0 6px 18px color-mix(in srgb, #c41e3a 14%, transparent);
+}
+
+.mark-logo {
+  display: block;
+  width: 118px;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: left center;
+  transform: translateX(-2px);
 }
 
 .mark-btn {
@@ -173,6 +184,19 @@ h2 {
   background: transparent;
   cursor: pointer;
   padding: 0;
+  border-radius: 4px;
+}
+
+.mark-btn:hover .mark {
+  border-color: color-mix(in srgb, #c41e3a 55%, var(--line-strong));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #fff 80%, transparent),
+    0 8px 22px color-mix(in srgb, #c41e3a 22%, transparent);
+}
+
+.mark-btn:focus-visible .mark {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
 }
 
 .brand-kicker {
@@ -793,6 +817,10 @@ textarea:disabled {
   background: color-mix(in srgb, var(--color-primary) 18%, var(--color-card));
 }
 
+.pdf-loaded-readonly {
+  padding-right: 12px;
+}
+
 select,
 textarea {
   width: 100%;
@@ -1100,12 +1128,118 @@ textarea.nota-textarea {
 }
 
 .table-title {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: 0.76rem;
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+.table-head-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+  margin: 0 0 8px;
+}
+
+.table-subtitle {
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.table-toggle-link {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.table-toggle-link:hover {
+  color: var(--color-cta);
+}
+
+.table-empty {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-elev);
+}
+
+.info-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.info-tip-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--muted) 40%, transparent);
+  border-radius: 999px;
+  background: var(--bg-elev);
+  color: var(--muted);
+  font-size: 0.62rem;
+  line-height: 1;
+  cursor: help;
+}
+
+.info-tip-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.info-tip-popup {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  z-index: 20;
+  width: max-content;
+  max-width: 240px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--color-card);
+  color: var(--color-text);
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  line-height: 1.45;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-text) 12%, transparent);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+}
+
+.info-tip:hover .info-tip-popup,
+.info-tip:focus-within .info-tip-popup {
+  opacity: 1;
+  visibility: visible;
+}
+
+.motivo-cell {
+  font-family: inherit;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  min-width: 180px;
+  max-width: 280px;
 }
 
 .table-wrap {
@@ -1201,6 +1335,20 @@ td:nth-child(n + 3) {
 .loading-title {
   margin: 0 0 4px;
   font-weight: 500;
+}
+
+.loading-hint {
+  margin: 0;
+  line-height: 1.5;
+  max-width: 42rem;
+}
+
+.loading-step {
+  margin: 8px 0 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--muted) 85%, var(--color-primary));
 }
 
 .spinner {

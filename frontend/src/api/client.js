@@ -1,4 +1,15 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? "";
+const API_BASE = import.meta.env?.VITE_API_URL ?? "";
+
+export function mensajeErrorRed(exc) {
+  const msg = String(exc?.message || exc || "");
+  if (/failed to fetch|networkerror|load failed|network request failed/i.test(msg)) {
+    return (
+      "No se pudo conectar con la API. El análisis se cortó (servidor recargado, " +
+      "límite de OpenAI o espera larga). Espere unos segundos y vuelva a pulsar Analizar."
+    );
+  }
+  return msg || "No se pudo completar la petición.";
+}
 
 async function parseError(res) {
   const payload = await res.json().catch(() => ({}));
@@ -10,10 +21,31 @@ async function parseError(res) {
   return `Error ${res.status}`;
 }
 
-export async function healthCheck() {
-  const res = await fetch(`${API_BASE}/health`);
+async function apiFetch(url, init) {
+  let res;
+  try {
+    res = await fetch(url, init);
+  } catch (exc) {
+    throw new Error(mensajeErrorRed(exc));
+  }
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();
+}
+
+export async function healthCheck({ retries = 0, delayMs = 600 } = {}) {
+  let last;
+  const attempts = Math.max(0, retries) + 1;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      return await apiFetch(`${API_BASE}/health`);
+    } catch (exc) {
+      last = exc;
+      if (i + 1 < attempts) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+  throw last;
 }
 
 export async function analizarNota({
@@ -21,6 +53,8 @@ export async function analizarNota({
   mockLlm,
   idioma = "spanish",
   ejemploId = "propia",
+  pdfOrigen = null,
+  pdfMuestraId = null,
   brazos = ["tfidf", "llm_zero", "llm_rag"],
   umbral = 0.5,
   guardarHistorial = true,
@@ -33,60 +67,52 @@ export async function analizarNota({
     ejemplo_id: ejemploId,
     guardar_historial: guardarHistorial,
   };
+  if (pdfOrigen) {
+    body.pdf_origen = pdfOrigen;
+  }
+  if (pdfMuestraId) {
+    body.pdf_muestra_id = pdfMuestraId;
+  }
   if (mockLlm !== undefined) {
     body.mock_llm = mockLlm;
   }
 
-  const res = await fetch(`${API_BASE}/generar`, {
+  return apiFetch(`${API_BASE}/generar`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(await parseError(res));
-  return res.json();
 }
 
 export async function fetchHistorial(limit = 10) {
-  const res = await fetch(`${API_BASE}/historial?limit=${limit}`);
-  if (!res.ok) throw new Error(await parseError(res));
-  return res.json();
+  return apiFetch(`${API_BASE}/historial?limit=${limit}`);
 }
 
 export async function deleteHistorialItem(id) {
-  const res = await fetch(`${API_BASE}/historial/${encodeURIComponent(id)}`, {
+  return apiFetch(`${API_BASE}/historial/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
-  if (!res.ok) throw new Error(await parseError(res));
-  return res.json();
 }
 
 export async function clearHistorialApi() {
-  const res = await fetch(`${API_BASE}/historial`, { method: "DELETE" });
-  if (!res.ok) throw new Error(await parseError(res));
-  return res.json();
+  return apiFetch(`${API_BASE}/historial`, { method: "DELETE" });
 }
 
 export async function listarMuestrasPdf() {
-  const res = await fetch(`${API_BASE}/muestras-pdf`);
-  if (!res.ok) throw new Error(await parseError(res));
-  return res.json();
+  return apiFetch(`${API_BASE}/muestras-pdf`);
 }
 
 async function postPdf(path, { file, muestraId }) {
-  let res;
   if (file) {
     const form = new FormData();
     form.append("archivo", file);
-    res = await fetch(`${API_BASE}${path}`, { method: "POST", body: form });
-  } else {
-    res = await fetch(`${API_BASE}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ muestra_id: muestraId }),
-    });
+    return apiFetch(`${API_BASE}${path}`, { method: "POST", body: form });
   }
-  if (!res.ok) throw new Error(await parseError(res));
-  return res.json();
+  return apiFetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ muestra_id: muestraId }),
+  });
 }
 
 export async function extraerPdf({ file, muestraId }) {
