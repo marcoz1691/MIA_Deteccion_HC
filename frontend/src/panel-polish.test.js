@@ -75,9 +75,14 @@ test("resultados panel filters alerts and shows info tips", () => {
   assert.match(resultadosSource, /Frases a revisar/);
   assert.match(resultadosSource, /Expediente extenso/);
   assert.match(resultadosSource, /import InfoTip/);
+  assert.match(resultadosSource, /import TrazabilidadDetalle/);
   assert.match(resultadosSource, /explicarInconsistencia/);
   assert.match(resultadosSource, /Motivo/);
+  assert.match(resultadosSource, /Trazabilidad/);
   assert.match(stylesSource, /\.info-tip-popup/);
+  assert.match(stylesSource, /\.shell-workspace \.workspace[\s\S]*flex-direction:\s*column/);
+  assert.match(stylesSource, /\.shell-workspace \.workspace[\s\S]*align-items:\s*stretch/);
+  assert.match(stylesSource, /\.shell-workspace \.card[\s\S]*width:\s*100%/);
 });
 
 test("historial restore maps pdf metadata", () => {

@@ -57,7 +57,13 @@ export default function HeaderBrand({
             </span>
           </button>
           <div>
-            <p className="brand-kicker">MIA · Clínica CITIMED</p>
+            <p className="brand-kicker">
+              <span className="brand-kicker-mia">MIA</span>
+              <span className="brand-kicker-sep" aria-hidden="true">
+                ·
+              </span>
+              <span className="brand-kicker-site">Clínica CITIMED</span>
+            </p>
             <h1>Consistencia de historias clínicas</h1>
           </div>
         </div>

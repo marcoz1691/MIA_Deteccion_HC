@@ -30,6 +30,11 @@ class GenerarRequest(BaseModel):
     guardar_historial: bool = Field(True, description="Persistir el análisis en SQLite.")
 
 
+class RagFuenteResponse(BaseModel):
+    fuente: str
+    extracto: str
+
+
 class OracionResponse(BaseModel):
     sid: int
     oracion: str
@@ -38,10 +43,12 @@ class OracionResponse(BaseModel):
     score_llm_rag: float | None = None
     score_localizacion: float
     alerta: bool
+    brazo_localizacion: str | None = None
     respuesta_llm_zero: str | None = None
     respuesta_llm_rag: str | None = None
     latencia_llm_zero_ms: float | None = None
     latencia_llm_rag_ms: float | None = None
+    rag_fuentes: list[RagFuenteResponse] = Field(default_factory=list)
 
 
 class Top1Response(BaseModel):

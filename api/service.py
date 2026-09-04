@@ -13,6 +13,7 @@ from api.schemas import (
     GenerarResponse,
     HistorialItemResponse,
     OracionResponse,
+    RagFuenteResponse,
     Top1Response,
 )
 from api.settings import resolve_mock_llm
@@ -182,6 +183,10 @@ class InferenceService:
 
 def serialize_oracion(res: ResultadoOracion, brazos: list[Brazo], umbral: float) -> OracionResponse:
     score_loc = res.score_localizacion(brazos)
+    rag_fuentes = [
+        RagFuenteResponse(fuente=f["fuente"], extracto=f["extracto"])
+        for f in (res.rag_fuentes or [])
+    ]
     return OracionResponse(
         sid=res.sid,
         oracion=res.oracion,
@@ -190,10 +195,12 @@ def serialize_oracion(res: ResultadoOracion, brazos: list[Brazo], umbral: float)
         score_llm_rag=res.score_llm_rag,
         score_localizacion=score_loc,
         alerta=res.alerta(umbral, brazos),
+        brazo_localizacion=res.brazo_localizacion(brazos),
         respuesta_llm_zero=res.respuesta_llm_zero,
         respuesta_llm_rag=res.respuesta_llm_rag,
         latencia_llm_zero_ms=res.latencia_llm_zero_ms,
         latencia_llm_rag_ms=res.latencia_llm_rag_ms,
+        rag_fuentes=rag_fuentes,
     )
 
 

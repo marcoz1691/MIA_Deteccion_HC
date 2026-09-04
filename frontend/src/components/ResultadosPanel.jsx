@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { explicarInconsistencia } from "../explicarInconsistencia";
 import { getLoadingMessage, getLoadingStep } from "../loadingMessages";
 import InfoTip from "./InfoTip";
+import TrazabilidadDetalle from "./TrazabilidadDetalle";
 
 
 
@@ -111,7 +112,7 @@ export default function ResultadosPanel({ resultado, error, loading, mockLlm = t
 
     <section
 
-      className="card"
+      className="card resultados-panel"
 
       aria-labelledby="result-title"
 
@@ -216,6 +217,11 @@ function ResultadoBody({ resultado }) {
 
   const totalFrases = n_total || oraciones.length;
 
+  const top1Full = useMemo(
+    () => (top1 ? oraciones.find((o) => o.sid === top1.sid) : null),
+    [oraciones, top1],
+  );
+
 
 
   return (
@@ -299,6 +305,10 @@ function ResultadoBody({ resultado }) {
           </header>
 
           <p>{top1.oracion}</p>
+
+          {alerta && top1Full ? (
+            <TrazabilidadDetalle oracion={top1Full} brazosEfectivos={brazosEfectivos} />
+          ) : null}
 
         </article>
 
@@ -452,6 +462,18 @@ function ResultadoBody({ resultado }) {
 
                 <th>Motivo</th>
 
+                <th>
+
+                  <InfoTip
+
+                    label="Trazabilidad"
+
+                    tip="De dónde salió la señal: comparador TF-IDF, respuesta del LLM y fragmentos de guías clínicas (GPC) usados en RAG."
+
+                  />
+
+                </th>
+
               </tr>
 
             </thead>
@@ -483,6 +505,20 @@ function ResultadoBody({ resultado }) {
                   <td className="motivo-cell">
 
                     {o.alerta ? explicarInconsistencia(o, brazosEfectivos) : "—"}
+
+                  </td>
+
+                  <td className="trazabilidad-cell">
+
+                    {o.alerta ? (
+                      <TrazabilidadDetalle
+                        oracion={o}
+                        brazosEfectivos={brazosEfectivos}
+                        compact
+                      />
+                    ) : (
+                      "—"
+                    )}
 
                   </td>
 
