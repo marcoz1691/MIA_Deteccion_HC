@@ -1,4 +1,4 @@
-# Guía de anotación de inconsistencias clínicas — Corpus CITIMED Odontología
+# Guía de anotación de inconsistencias clínicas — Corpus CITIMED 
 
 **Proyecto:** MIA_Deteccion_HC — Detección automática de inconsistencias en historias clínicas
 **Programa:** Maestría en Inteligencia Artificial Aplicada — Universidad de las Américas (UDLA), Ecuador
