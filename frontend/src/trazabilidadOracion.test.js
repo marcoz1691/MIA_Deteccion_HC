@@ -25,3 +25,17 @@ test("construirTrazabilidad incluye señal, LLM y chunks GPC", () => {
   assert.ok(items.some((i) => i.id === "llm-zero" && i.texto.includes("SI")));
   assert.ok(items.some((i) => i.id === "gpc-0" && i.titulo.includes("dolor lumbar")));
 });
+
+test("construirTrazabilidad funciona bajo umbral 0.50", () => {
+  const o = {
+    sid: 2,
+    oracion: "Paciente estable.",
+    score_tfidf: 0.31,
+    score_localizacion: 0.31,
+    brazo_localizacion: "TF-IDF",
+    alerta: false,
+  };
+  const items = construirTrazabilidad(o, ["tfidf"]);
+  assert.ok(items.some((i) => i.id === "tfidf" && i.texto.includes("0.31")));
+  assert.ok(!items.some((i) => i.texto.includes("supera umbral")));
+});

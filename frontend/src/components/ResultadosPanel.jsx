@@ -306,7 +306,7 @@ function ResultadoBody({ resultado }) {
 
           <p>{top1.oracion}</p>
 
-          {alerta && top1Full ? (
+          {top1Full ? (
             <TrazabilidadDetalle oracion={top1Full} brazosEfectivos={brazosEfectivos} />
           ) : null}
 
@@ -509,17 +509,11 @@ function ResultadoBody({ resultado }) {
                   </td>
 
                   <td className="trazabilidad-cell">
-
-                    {o.alerta ? (
-                      <TrazabilidadDetalle
-                        oracion={o}
-                        brazosEfectivos={brazosEfectivos}
-                        compact
-                      />
-                    ) : (
-                      "—"
-                    )}
-
+                    <TrazabilidadDetalle
+                      oracion={o}
+                      brazosEfectivos={brazosEfectivos}
+                      compact
+                    />
                   </td>
 
                 </tr>

@@ -79,6 +79,10 @@ test("resultados panel filters alerts and shows info tips", () => {
   assert.match(resultadosSource, /explicarInconsistencia/);
   assert.match(resultadosSource, /Motivo/);
   assert.match(resultadosSource, /Trazabilidad/);
+  assert.doesNotMatch(
+    resultadosSource,
+    /alerta && top1Full[\s\S]*TrazabilidadDetalle/,
+  );
   assert.match(stylesSource, /\.info-tip-popup/);
   assert.match(stylesSource, /\.shell-workspace \.workspace[\s\S]*flex-direction:\s*column/);
   assert.match(stylesSource, /\.shell-workspace \.workspace[\s\S]*align-items:\s*stretch/);
