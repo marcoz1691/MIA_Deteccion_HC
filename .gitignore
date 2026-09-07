@@ -272,3 +272,6 @@ s11/tools/_dump_*.txt
 s12/poison/
 s12/salidas_poison/
 *_anon.pdf
+
+# Presentaciones: se gestionan fuera del repositorio
+*.pptx
