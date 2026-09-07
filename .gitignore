@@ -264,3 +264,11 @@ tests/eval/last_eval_report.json
 tests/perf/last_benchmark.json
 s11/evidencias/_run_*.txt
 s11/tools/_dump_*.txt
+
+# Conjunto adversarial S12: expedientes reales de CITIMED con inconsistencia
+# inducida. Contienen PHI (las firmas de los profesionales no estan tachadas en
+# la salida del anonimizador v1). Viven fuera del repositorio; la ruta se pasa
+# con --poison-dir o con POISON_DIR. Nunca versionar los PDF ni la transcripcion.
+s12/poison/
+s12/salidas_poison/
+*_anon.pdf
