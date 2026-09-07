@@ -10,6 +10,8 @@ export function mapHistorialItem(item) {
     idioma: item.idioma ?? "spanish",
     mockLlm: Boolean(item.mock_llm),
     alerta: Boolean(item.alerta),
+    pdfOrigen: item.pdf_origen ?? null,
+    pdfMuestraId: item.pdf_muestra_id ?? null,
   };
 }
 

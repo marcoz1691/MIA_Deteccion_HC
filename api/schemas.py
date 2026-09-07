@@ -25,7 +25,14 @@ class GenerarRequest(BaseModel):
     )
     umbral: float = Field(0.5, ge=0.0, le=1.0, description="Umbral de alerta para localización.")
     ejemplo_id: str = Field("propia", description="Identificador del caso demo o 'propia'.")
+    pdf_origen: str | None = Field(None, description="Nombre del PDF cargado (historial).")
+    pdf_muestra_id: str | None = Field(None, description="ID de muestra PDF del servidor (historial).")
     guardar_historial: bool = Field(True, description="Persistir el análisis en SQLite.")
+
+
+class RagFuenteResponse(BaseModel):
+    fuente: str
+    extracto: str
 
 
 class OracionResponse(BaseModel):
@@ -36,10 +43,12 @@ class OracionResponse(BaseModel):
     score_llm_rag: float | None = None
     score_localizacion: float
     alerta: bool
+    brazo_localizacion: str | None = None
     respuesta_llm_zero: str | None = None
     respuesta_llm_rag: str | None = None
     latencia_llm_zero_ms: float | None = None
     latencia_llm_rag_ms: float | None = None
+    rag_fuentes: list[RagFuenteResponse] = Field(default_factory=list)
 
 
 class Top1Response(BaseModel):
@@ -77,6 +86,8 @@ class HistorialItemResponse(BaseModel):
     idioma: IdiomaLiteral
     mock_llm: bool
     alerta: bool
+    pdf_origen: str | None = None
+    pdf_muestra_id: str | None = None
 
 
 class HistorialListResponse(BaseModel):

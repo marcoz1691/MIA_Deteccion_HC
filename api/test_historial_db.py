@@ -41,6 +41,20 @@ class TestHistorialDB(unittest.TestCase):
             )
         self.assertLessEqual(self.db.count(), 3)
 
+    def test_save_pdf_metadata_roundtrip(self):
+        saved = self.db.save_analisis(
+            nota="Nota PDF",
+            resultado={"oraciones": [], "top1": None},
+            ejemplo_id="pdf",
+            pdf_origen="hc0001_anon.pdf",
+            pdf_muestra_id="salidas_buscable/hc0001_anon.pdf",
+        )
+        items = self.db.list_analisis()
+        self.assertEqual(items[0]["pdf_origen"], "hc0001_anon.pdf")
+        self.assertEqual(items[0]["pdf_muestra_id"], "salidas_buscable/hc0001_anon.pdf")
+        fetched = self.db.get_analisis(saved["id"])
+        self.assertEqual(fetched["pdf_origen"], "hc0001_anon.pdf")
+
 
 if __name__ == "__main__":
     unittest.main()

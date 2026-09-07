@@ -38,6 +38,7 @@ class ResultadoOracion:
     latencia_llm_zero_ms: float | None = None
     latencia_llm_rag_ms: float | None = None
     rag_context: str | None = None
+    rag_fuentes: list[dict[str, str]] | None = None
 
     def score_max(self, brazos: list[Brazo]) -> float:
         scores = []
@@ -191,13 +192,22 @@ def puntuar_llm(
     idioma: Idioma,
     rag: RAGIndex | None = None,
     nota_context: str = "",
-) -> tuple[float, str, float, str | None]:
-    contexto = rag.retrieve(oracion) if mode == "rag" and rag else ""
+) -> tuple[float, str, float, str | None, list[dict[str, str]] | None]:
+    fuentes: list[dict[str, str]] | None = None
+    if mode == "rag" and rag:
+        hits = rag.retrieve_hits(oracion)
+        contexto = "\n---\n".join(str(h["extracto"]) for h in hits)
+        fuentes = [
+            {"fuente": str(h["fuente"]), "extracto": str(h["extracto"])[:500]}
+            for h in hits
+        ]
+    else:
+        contexto = ""
     prompt = get_prompt(mode, idioma, oracion, contexto, nota=nota_context)
     brazo = f"llm_{mode}"
     resp = client.complete(prompt, brazo=brazo, nota_context=nota_context)
     score = parse_yes_no(resp["text"], idioma)
-    return score, resp["text"], resp["latency_ms"], contexto or None
+    return score, resp["text"], resp["latency_ms"], contexto or None, fuentes
 
 
 def _limpiar_scores_llm(resultados: list[ResultadoOracion]) -> None:
@@ -209,6 +219,7 @@ def _limpiar_scores_llm(resultados: list[ResultadoOracion]) -> None:
         res.latencia_llm_zero_ms = None
         res.latencia_llm_rag_ms = None
         res.rag_context = None
+        res.rag_fuentes = None
 
 
 def _asegurar_tfidf(
@@ -293,20 +304,21 @@ def analizar_nota(
 
             for res in resultados:
                 if "llm_zero" in llm_brazos:
-                    score, text, lat, _ = puntuar_llm(
+                    score, text, lat, _, _ = puntuar_llm(
                         res.oracion, client, "zero_shot", idioma, rag=None, nota_context=texto
                     )
                     res.score_llm_zero = score
                     res.respuesta_llm_zero = text
                     res.latencia_llm_zero_ms = lat
                 if "llm_rag" in llm_brazos:
-                    score, text, lat, ctx = puntuar_llm(
+                    score, text, lat, ctx, fuentes = puntuar_llm(
                         res.oracion, client, "rag", idioma, rag=rag, nota_context=texto
                     )
                     res.score_llm_rag = score
                     res.respuesta_llm_rag = text
                     res.latencia_llm_rag_ms = lat
                     res.rag_context = ctx
+                    res.rag_fuentes = fuentes
         except LLMUnavailableError as exc:
             if not fallback_tfidf:
                 raise

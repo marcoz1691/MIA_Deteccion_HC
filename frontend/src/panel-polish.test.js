@@ -32,7 +32,7 @@ test("analyze action stays reachable without scrolling past the note", () => {
 test("empty guidance follows the 01 through 03 demo path", () => {
   assert.match(resultadosSource, /<b>01<\/b>[\s\S]*historia clínica/);
   assert.match(resultadosSource, /<b>02<\/b>[\s\S]*Analizar historia clínica/);
-  assert.match(resultadosSource, /<b>03<\/b>[\s\S]*validar/i);
+  assert.match(resultadosSource, /<b>03<\/b>[\s\S]*criterio clínico/i);
 });
 
 test("active chips use a soft primary treatment", () => {
@@ -68,4 +68,29 @@ test("reduced motion stops spinners and short control transitions", () => {
     stylesSource,
     /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.chip,[\s\S]*?\.historial-item[^}]*\{[^}]*transition:\s*none;/,
   );
+});
+
+test("resultados panel filters alerts and shows info tips", () => {
+  assert.match(resultadosSource, /oraciones\.filter\(\(o\) => o\.alerta\)/);
+  assert.match(resultadosSource, /Frases a revisar/);
+  assert.match(resultadosSource, /Expediente extenso/);
+  assert.match(resultadosSource, /import InfoTip/);
+  assert.match(resultadosSource, /import TrazabilidadDetalle/);
+  assert.match(resultadosSource, /explicarInconsistencia/);
+  assert.match(resultadosSource, /Motivo/);
+  assert.match(resultadosSource, /Trazabilidad/);
+  assert.doesNotMatch(
+    resultadosSource,
+    /alerta && top1Full[\s\S]*TrazabilidadDetalle/,
+  );
+  assert.match(stylesSource, /\.info-tip-popup/);
+  assert.match(stylesSource, /\.shell-workspace \.workspace[\s\S]*flex-direction:\s*column/);
+  assert.match(stylesSource, /\.shell-workspace \.workspace[\s\S]*align-items:\s*stretch/);
+  assert.match(stylesSource, /\.shell-workspace \.card[\s\S]*width:\s*100%/);
+});
+
+test("historial restore maps pdf metadata", () => {
+  assert.match(appSource, /pdfOrigen: pdfCargado\?\.nombre/);
+  assert.match(appSource, /item\.pdfOrigen/);
+  assert.match(appSource, /soloLectura: true/);
 });

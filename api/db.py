@@ -53,10 +53,19 @@ class HistorialDB:
     def _init_schema(self) -> None:
         with self._connect() as conn:
             conn.executescript(SCHEMA)
+            self._ensure_column(conn, "pdf_origen", "TEXT")
+            self._ensure_column(conn, "pdf_muestra_id", "TEXT")
+
+    @staticmethod
+    def _ensure_column(conn: sqlite3.Connection, name: str, col_type: str) -> None:
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(analisis)").fetchall()}
+        if name not in cols:
+            conn.execute(f"ALTER TABLE analisis ADD COLUMN {name} {col_type}")
 
     @staticmethod
     def _row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
         resultado = json.loads(row["resultado_json"])
+        keys = row.keys()
         return {
             "id": row["id"],
             "created_at": row["created_at"],
@@ -66,6 +75,8 @@ class HistorialDB:
             "idioma": row["idioma"],
             "mock_llm": bool(row["mock_llm"]),
             "alerta": bool(row["alerta"]),
+            "pdf_origen": row["pdf_origen"] if "pdf_origen" in keys else None,
+            "pdf_muestra_id": row["pdf_muestra_id"] if "pdf_muestra_id" in keys else None,
         }
 
     def save_analisis(
@@ -77,6 +88,8 @@ class HistorialDB:
         idioma: str = "spanish",
         mock_llm: bool = True,
         alerta: bool = False,
+        pdf_origen: str | None = None,
+        pdf_muestra_id: str | None = None,
     ) -> dict[str, Any]:
         entry_id = str(uuid.uuid4())
         created_at = _utc_now_iso()
@@ -87,8 +100,9 @@ class HistorialDB:
                 """
                 INSERT INTO analisis (
                     id, created_at, nota, resultado_json,
-                    ejemplo_id, idioma, mock_llm, alerta
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ejemplo_id, idioma, mock_llm, alerta,
+                    pdf_origen, pdf_muestra_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     entry_id,
@@ -99,6 +113,8 @@ class HistorialDB:
                     idioma,
                     int(mock_llm),
                     int(alerta),
+                    pdf_origen,
+                    pdf_muestra_id,
                 ),
             )
             self._trim_old_rows(conn)
@@ -112,6 +128,8 @@ class HistorialDB:
             "idioma": idioma,
             "mock_llm": mock_llm,
             "alerta": alerta,
+            "pdf_origen": pdf_origen,
+            "pdf_muestra_id": pdf_muestra_id,
         }
 
     def _trim_old_rows(self, conn: sqlite3.Connection) -> None:
@@ -133,7 +151,8 @@ class HistorialDB:
             rows = conn.execute(
                 """
                 SELECT id, created_at, nota, resultado_json,
-                       ejemplo_id, idioma, mock_llm, alerta
+                       ejemplo_id, idioma, mock_llm, alerta,
+                       pdf_origen, pdf_muestra_id
                 FROM analisis
                 ORDER BY created_at DESC
                 LIMIT ?
@@ -147,7 +166,8 @@ class HistorialDB:
             row = conn.execute(
                 """
                 SELECT id, created_at, nota, resultado_json,
-                       ejemplo_id, idioma, mock_llm, alerta
+                       ejemplo_id, idioma, mock_llm, alerta,
+                       pdf_origen, pdf_muestra_id
                 FROM analisis WHERE id = ?
                 """,
                 (entry_id,),

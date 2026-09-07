@@ -23,7 +23,19 @@ class RAGIndex:
         self.top_k = top_k
         self._model = None
         self._index = None
-        self._chunks: list[str] = []
+        self._chunks: list[dict[str, str]] = []
+
+    @staticmethod
+    def _normalize_chunk(item: str | dict) -> dict[str, str]:
+        if isinstance(item, str):
+            return {"text": item, "fuente": "desconocida"}
+        return {
+            "text": str(item.get("text", "")),
+            "fuente": str(item.get("fuente", "desconocida")),
+        }
+
+    def _normalize_chunks(self, raw: list) -> list[dict[str, str]]:
+        return [self._normalize_chunk(item) for item in raw]
 
     def _load_model(self):
         if self._model is None:
@@ -36,14 +48,14 @@ class RAGIndex:
             except Exception:
                 self._model = SentenceTransformer(self.embedding_model_name)
 
-    def _load_chunks(self) -> list[str]:
-        chunks = []
+    def _load_chunks(self) -> list[dict[str, str]]:
+        chunks: list[dict[str, str]] = []
         for f in sorted(self.knowledge_dir.glob("*.txt")):
             text = f.read_text(encoding="utf-8").strip()
             for para in text.split("\n\n"):
                 para = para.strip()
                 if para:
-                    chunks.append(para)
+                    chunks.append({"text": para, "fuente": f.name})
         return chunks
 
     def build(self) -> "RAGIndex":
@@ -54,7 +66,8 @@ class RAGIndex:
         if not self._chunks:
             raise FileNotFoundError(f"No hay chunks en {self.knowledge_dir}")
 
-        embeddings = self._model.encode(self._chunks, show_progress_bar=False)
+        texts = [c["text"] for c in self._chunks]
+        embeddings = self._model.encode(texts, show_progress_bar=False)
         embeddings = np.asarray(embeddings, dtype=np.float32)
         faiss.normalize_L2(embeddings)
 
@@ -77,7 +90,7 @@ class RAGIndex:
         chunks_file = self.index_path / "chunks.json"
         if not idx_file.exists() or not chunks_file.exists():
             return self.build()
-        guardados = json.loads(chunks_file.read_text(encoding="utf-8"))
+        guardados = self._normalize_chunks(json.loads(chunks_file.read_text(encoding="utf-8")))
         actuales = self._load_chunks()
         if guardados != actuales:
             return self.build()
@@ -85,15 +98,33 @@ class RAGIndex:
         self._chunks = guardados
         return self
 
-    def retrieve(self, query: str) -> str:
-        """Retorna top-k chunks concatenados como contexto."""
+    def retrieve_hits(self, query: str) -> list[dict[str, str | float]]:
+        """Retorna top-k chunks con metadatos de fuente y score de similitud."""
         if self._index is None:
             self.load()
         self._load_model()
         q = self._model.encode([query], show_progress_bar=False)
         q = np.asarray(q, dtype=np.float32)
         import faiss
+
         faiss.normalize_L2(q)
-        scores, indices = self._index.search(q, min(self.top_k, len(self._chunks)))
-        parts = [self._chunks[i] for i in indices[0] if i >= 0]
-        return "\n---\n".join(parts)
+        k = min(self.top_k, len(self._chunks))
+        scores, indices = self._index.search(q, k)
+        hits: list[dict[str, str | float]] = []
+        for rank, idx in enumerate(indices[0]):
+            if idx < 0:
+                continue
+            chunk = self._chunks[idx]
+            hits.append(
+                {
+                    "fuente": chunk["fuente"],
+                    "extracto": chunk["text"],
+                    "score": float(scores[0][rank]),
+                }
+            )
+        return hits
+
+    def retrieve(self, query: str) -> str:
+        """Retorna top-k chunks concatenados como contexto."""
+        hits = self.retrieve_hits(query)
+        return "\n---\n".join(str(h["extracto"]) for h in hits)

@@ -36,6 +36,15 @@ DPI_RASTER = 200
 
 RE_FECHA = re.compile(r"\b(19|20)\d{2}-\d{2}-\d{2}\b")
 RE_HORA = re.compile(r"\b([01]?\d|2[0-3]):[0-5]\d\b")
+RE_NOTA_CORTADA = re.compile(
+    r"\b(AL|DEL|DE|EN|CON|POR|PARA|SIN|HACIA|HASTA|SEGÚN|SEGUN|SOBRE|ENTRE|DURANTE|TRAS)\s*$",
+    re.IGNORECASE,
+)
+AVISO_NOTA_CORTADA = (
+    "La última nota de evolución termina a media frase "
+    "(corte de página o de columna). Revise si el resto está en la hoja siguiente "
+    "(p. ej. EVOLUCIÓN HOSPITALARIA con signos vitales, examen físico y análisis)."
+)
 
 
 # --------------------------------------------------------------------------- raster
@@ -54,6 +63,28 @@ def _tiene_capa_texto(doc) -> bool:
     return any(pagina.get_text("text").strip() for pagina in doc)
 
 
+# --------------------------------------------------------------------------- fidelidad de corte de página
+
+
+def nota_parece_cortada(texto: str) -> bool:
+    """True si la nota muere en una preposición típica de salto de columna/página."""
+    t = (texto or "").strip()
+    if not t:
+        return False
+    if t.endswith("[corte]"):
+        return True
+    if t[-1] in ".!?:;)]}»\"'":
+        return False
+    return bool(RE_NOTA_CORTADA.search(t))
+
+
+def _cerrar_si_cortada(notas: str) -> str:
+    t = (notas or "").rstrip()
+    if nota_parece_cortada(t) and not t.endswith("[corte]"):
+        return f"{t} [corte]"
+    return notas
+
+
 # --------------------------------------------------------------------------- normalización
 
 _RE_ID_NUMERICO = re.compile(r"\d[\d\s.\-]{6,}\d")
@@ -65,7 +96,7 @@ def _hallazgos_identificadores(texto: str):
         from anonimizador_ocr import deteccion
     except ImportError:
         return []
-    return list(deteccion.detectar(texto, usar_ner=False, fechas="nacimiento"))
+    return list(deteccion.detectar(texto, usar_ner=True, fechas="nacimiento"))
 
 
 def _redactar_spans(texto: str, spans: list[tuple[int, int]]) -> str:
@@ -88,7 +119,7 @@ def _redactar_por_callback(linea: str, tiene_identificador) -> str:
 
 
 def _scrub(texto: str, tiene_identificador) -> str:
-    """Enmascara identificadores residuales sin borrar el resto de la nota clínica."""
+    """Enmascara nombres e identificadores residuales sin borrar el resto clínico."""
     if not texto:
         return ""
     limpias = []
@@ -96,14 +127,12 @@ def _scrub(texto: str, tiene_identificador) -> str:
         if not linea.strip():
             limpias.append(linea)
             continue
-        if not tiene_identificador(linea):
-            limpias.append(linea)
-            continue
         hallazgos = _hallazgos_identificadores(linea)
         if hallazgos:
-            limpias.append(_redactar_spans(linea, [(h.ini, h.fin) for h in hallazgos]))
-        else:
-            limpias.append(_redactar_por_callback(linea, tiene_identificador))
+            linea = _redactar_spans(linea, [(h.ini, h.fin) for h in hallazgos])
+        if tiene_identificador(linea):
+            linea = _redactar_por_callback(linea, tiene_identificador)
+        limpias.append(linea)
     return "\n".join(limpias).strip()
 
 
@@ -112,7 +141,9 @@ def _normalizar_entradas(crudo: dict, tiene_identificador) -> list[dict]:
     for i, bruto in enumerate(crudo.get("entries", []) or [], start=1):
         if not isinstance(bruto, dict):
             continue
-        notas = _scrub(str(bruto.get("notas_evolucion", "") or ""), tiene_identificador)
+        notas = _cerrar_si_cortada(
+            _scrub(str(bruto.get("notas_evolucion", "") or ""), tiene_identificador)
+        )
         ordenes_bruto = bruto.get("ordenes_medicas", []) or []
         if isinstance(ordenes_bruto, str):
             ordenes_bruto = [ordenes_bruto]
@@ -281,6 +312,9 @@ def extraer_estructurado(
             f"Se procesaron las primeras {max_paginas} de {n_paginas} páginas."
         )
         aviso = f"{aviso} {extra}".strip() if aviso else extra
+
+    if entradas and nota_parece_cortada(entradas[-1]["notas_evolucion"]):
+        aviso = f"{aviso} {AVISO_NOTA_CORTADA}".strip() if aviso else AVISO_NOTA_CORTADA
 
     sin_contenido = [
         p for p in crudo.get("paginas_sin_contenido", []) or [] if isinstance(p, int)

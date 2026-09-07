@@ -42,13 +42,28 @@ export default function HeaderBrand({
           <button
             type="button"
             className="mark-btn"
-            aria-label="MIA CITIMED"
+            aria-label="Clínica CITIMED"
             onClick={handleMarkClick}
           >
-            <span className="mark" aria-hidden="true" />
+            <span className="mark" aria-hidden="true">
+              <img
+                src="/citimed-logo.png"
+                alt=""
+                className="mark-logo"
+                width={120}
+                height={40}
+                decoding="async"
+              />
+            </span>
           </button>
           <div>
-            <p className="brand-kicker">MIA · CITIMED</p>
+            <p className="brand-kicker">
+              <span className="brand-kicker-mia">MIA</span>
+              <span className="brand-kicker-sep" aria-hidden="true">
+                ·
+              </span>
+              <span className="brand-kicker-site">Clínica CITIMED</span>
+            </p>
             <h1>Consistencia de historias clínicas</h1>
           </div>
         </div>

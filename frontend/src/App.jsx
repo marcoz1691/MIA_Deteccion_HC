@@ -46,7 +46,7 @@ export default function App() {
 
   useEffect(() => {
     if (!isDev) return;
-    healthCheck()
+    healthCheck({ retries: 3, delayMs: 700 })
       .then(async (data) => {
         setHealth(data);
         if (data.mock_llm_forzado) {
@@ -183,6 +183,8 @@ export default function App() {
         mockLlm: isDev ? mockLlm : undefined,
         idioma,
         ejemploId,
+        pdfOrigen: pdfCargado?.nombre ?? null,
+        pdfMuestraId: pdfCargado?.muestraId ?? null,
       });
       setResultado(data);
       setLoading(false);
@@ -205,8 +207,22 @@ export default function App() {
     setHistorialActivoId(item.id);
     setPdfAviso(null);
     setPdfError(null);
-    setPdfCargado(null);
     setEvolucion(null);
+    if (item.pdfOrigen) {
+      setPdfCargado({
+        nombre: item.pdfOrigen,
+        muestraId: item.pdfMuestraId ?? null,
+        soloLectura: true,
+      });
+    } else if (item.ejemploId === "pdf") {
+      setPdfCargado({
+        nombre: "Expediente PDF (nombre no guardado)",
+        muestraId: null,
+        soloLectura: true,
+      });
+    } else {
+      setPdfCargado(null);
+    }
   }
 
   async function handleHistorialRemove(id) {

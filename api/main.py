@@ -1,6 +1,7 @@
 """FastAPI — POST /generar para análisis de inconsistencias en historias clínicas."""
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
 
 from json import JSONDecodeError
@@ -209,11 +210,24 @@ async def extraer_pdf_estructurado(request: Request) -> ExtraerPdfEstructuradoRe
             transcriptor = None
 
     try:
-        resultado = extraer_estructurado(data, origen=origen, transcriptor=transcriptor)
+        resultado = await asyncio.to_thread(
+            extraer_estructurado, data, origen, transcriptor=transcriptor
+        )
     except PdfExtractError as exc:
         raise _pdf_http_error(exc) from exc
     except ValueError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except Exception as exc:
+        detalle = str(exc).lower()
+        if "429" in detalle or "rate_limit" in detalle:
+            raise HTTPException(
+                status_code=429,
+                detail=(
+                    "OpenAI alcanzó el límite de tokens por minuto. "
+                    "Espere un minuto y vuelva a subir el PDF."
+                ),
+            ) from exc
+        raise
     return ExtraerPdfEstructuradoResponse(**resultado)
 
 

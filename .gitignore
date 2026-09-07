@@ -251,6 +251,9 @@ s11/corpus/*.csv
 s11/tessdata/
 *.zip
 
+# PDFs oficiales del MSP: se re-descargan con python s7/ingest_gpc.py
+s7/knowledge_src/
+
 # Temporales Microsoft Word
 ~$*
 ~WRL*.tmp
